@@ -1,11 +1,12 @@
-pub mod nj_signal;
-pub mod nj_trace;
-mod nj_simulator;
+pub mod signal;
+pub mod trace;
+mod simulator;
+
+pub use crate::signal::Signal;
 
 #[cfg(test)]
 mod tests {
-    use crate::nj_signal::Signal;
-
+    use crate::signal::Signal;
     #[test]
     fn it_works() {
         let mut s:Signal<u32> = Default::default();
