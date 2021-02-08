@@ -1,10 +1,22 @@
-use crate::signal;
-use crate::trace;
+use super::process;
 
-struct Simulator {
+struct Simulator<'a> {
+    modified: Vec<&'a mut dyn Update>,
+    processes: Vec<&'a dyn process::Process>,
 }
 
-impl Simulator {
-    fn update<T: Copy + PartialEq + Default + std::fmt::Display + trace::Trace>(s:signal::Signal<T>) {
+impl<'a> Simulator<'a> {
+    fn update(&mut self) {
+        //TODO: See if sensivity list is triggered when updating (use the result)
+        self.modified.iter_mut().map(|x| x.update()); //return a vec of bool
+                                                      // also see filter and for_each
     }
+
+    fn push(&mut self, u: &'a mut dyn Update) {
+        self.modified.push(u);
+    }
+}
+
+pub trait Update {
+    fn update(&mut self) -> Option<&[&dyn process::Process]>;
 }
