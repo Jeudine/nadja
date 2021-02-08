@@ -3,13 +3,13 @@ use super::simulator;
 use super::trace;
 use std::fmt;
 
-pub struct Signal<'a, T: Copy + PartialEq + Default + fmt::Display + trace::Trace> {
+pub struct Signal<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> {
     cur_val: T,
     new_val: T,
-    sensitivity: Vec<&'a dyn process::Process>,
+    sensitivity: Vec<&'static dyn process::Process>,
 }
 
-impl<'a, T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Signal<'a, T> {
+impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Signal<T> {
     pub fn read(&self) -> T {
         self.cur_val
     }
@@ -18,18 +18,18 @@ impl<'a, T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Signal<'a,
         self.new_val = v;
     }
 
-    pub fn add_process(&mut self, p: &'a dyn process::Process) {
+    pub fn add_process(&mut self, p: &'static dyn process::Process) {
         self.sensitivity.push(p);
     }
 }
 
-impl<'a, T: Copy + PartialEq + Default + fmt::Display + trace::Trace> PartialEq for Signal<'a, T> {
+impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> PartialEq for Signal<T> {
     fn eq(&self, other: &Self) -> bool {
         self.cur_val == other.cur_val
     }
 }
 
-impl<'a, T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Default for Signal<'a, T> {
+impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Default for Signal<T> {
     fn default() -> Self {
         Signal {
             cur_val: Default::default(),
@@ -39,18 +39,14 @@ impl<'a, T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Default fo
     }
 }
 
-impl<'a, T: Copy + PartialEq + Default + fmt::Display + trace::Trace> fmt::Display
-    for Signal<'a, T>
-{
+impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> fmt::Display for Signal<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.cur_val.fmt(f)
     }
 }
 
-impl<'a, T: Copy + PartialEq + Default + fmt::Display + trace::Trace> simulator::Update
-    for Signal<'a, T>
-{
-    fn update(&mut self) -> Option<&[&dyn process::Process]> {
+impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> simulator::Update for Signal<T> {
+    fn update(&mut self) -> Option<&[&'static dyn process::Process]> {
         if self.cur_val != self.new_val {
             self.cur_val = self.new_val;
             Option::Some(&self.sensitivity[..])
