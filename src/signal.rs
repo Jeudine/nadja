@@ -9,7 +9,10 @@ pub struct Signal<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> {
     sensitivity: Vec<&'static dyn process::Process>,
 }
 
-impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Signal<T> {
+impl<T> Signal<T>
+where
+    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+{
     pub fn read(&self) -> T {
         self.cur_val
     }
@@ -23,13 +26,19 @@ impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Signal<T> {
     }
 }
 
-impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> PartialEq for Signal<T> {
+impl<T> PartialEq for Signal<T>
+where
+    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+{
     fn eq(&self, other: &Self) -> bool {
         self.cur_val == other.cur_val
     }
 }
 
-impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Default for Signal<T> {
+impl<T> Default for Signal<T>
+where
+    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+{
     fn default() -> Self {
         Signal {
             cur_val: Default::default(),
@@ -39,13 +48,19 @@ impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> Default for Si
     }
 }
 
-impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> fmt::Display for Signal<T> {
+impl<T> fmt::Display for Signal<T>
+where
+    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.cur_val.fmt(f)
     }
 }
 
-impl<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> simulator::Update for Signal<T> {
+impl<T> simulator::Update for Signal<T>
+where
+    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+{
     fn update(&mut self) -> Option<&[&'static dyn process::Process]> {
         if self.cur_val != self.new_val {
             self.cur_val = self.new_val;

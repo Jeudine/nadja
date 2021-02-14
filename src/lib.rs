@@ -2,6 +2,7 @@ pub mod process;
 pub mod signal;
 pub mod simulator;
 pub mod trace;
+pub mod module;
 
 pub use crate::signal::Signal;
 pub use crate::simulator::Update;
