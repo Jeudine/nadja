@@ -1,8 +1,8 @@
 use super::process;
 
-struct Simulator<'a> {
+pub struct Simulator<'a> {
     modified: Vec<&'a mut dyn Update>,
-    processes: Vec<&'static dyn process::Process>,
+    processes: Vec<&'static process::Process>,
 }
 
 impl<'a> Simulator<'a> {
@@ -24,11 +24,16 @@ impl<'a> Simulator<'a> {
         self.modified = Vec::new();
     }
 
-    fn push(&mut self, u: &'a mut dyn Update) {
+    pub fn push(&mut self, u: &'a mut dyn Update) {
         self.modified.push(u);
+    }
+
+    fn execute(&mut self) {
+        let processes = self.processes.clone();
+        processes.iter().for_each(|x| x.execute(self));
     }
 }
 
 pub trait Update {
-    fn update(&mut self) -> Option<&[&'static dyn process::Process]>;
+    fn update(&mut self) -> Option<&[&'static process::Process]>;
 }
