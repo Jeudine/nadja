@@ -30,8 +30,10 @@ impl<'a> Simulator<'a> {
         self.modified.push(u);
     }
 
-    pub fn schedule_process(&mut self, p: &'static dyn process::Process, t_r: usize) {
-        self.queue_schedule[t_r].push(p);
+    pub fn schedule_process(&mut self, p: &'static dyn process::Process, duration: usize) {
+        if self.duration >= duration {
+            self.queue_schedule[self.duration - duration].push(p);
+        }
     }
 
     /// Executes the processes in the process queue and empties it.
@@ -47,7 +49,11 @@ impl<'a> Simulator<'a> {
                 .collect::<Vec<_>>()
                 .iter()
                 .for_each(|x| match x.1 {
-                    Some(duration) => self.queue_schedule[duration].push(x.0),
+                    Some(duration) => {
+                        if self.duration >= duration {
+                            self.queue_schedule[self.duration - duration].push(x.0)
+                        }
+                    }
                     None => (),
                 });
             self.process_queue = Vec::new();
@@ -55,11 +61,12 @@ impl<'a> Simulator<'a> {
         }
     }
 
+    // Prevent user to start two times the simulation
     pub fn start(&mut self, duration: usize) {
         self.process_queue = Vec::with_capacity(duration);
         self.duration = duration;
         //add the initial processes
-        for time in 0..duration {
+        for _ in 0..duration {
             self.process_queue = match self.queue_schedule.pop() {
                 Some(queue) => queue,
                 None => panic!("Unexpected error!"),
