@@ -6,7 +6,7 @@ use std::fmt;
 pub struct Signal<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> {
     cur_val: T,
     new_val: T,
-    sensitivity: Vec<&'static process::Process>,
+    sensitivity: Vec<&'static dyn process::Process>,
 }
 
 impl<T> Signal<T>
@@ -18,11 +18,12 @@ where
     }
 
     pub fn write<'a>(&'a mut self, v: T, simulator: &mut simulator::Simulator<'a>) {
+        // can be optimized
         self.new_val = v;
         simulator.push(self);
     }
 
-    pub fn add_process(&mut self, p: &'static process::Process) {
+    pub fn add_process(&mut self, p: &'static dyn process::Process) {
         self.sensitivity.push(p);
     }
 }
@@ -62,7 +63,7 @@ impl<T> simulator::Update for Signal<T>
 where
     T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
 {
-    fn update(&mut self) -> Option<&[&'static process::Process]> {
+    fn update(&mut self) -> Option<&[&'static dyn process::Process]> {
         if self.cur_val != self.new_val {
             self.cur_val = self.new_val;
             Option::Some(&self.sensitivity[..])

@@ -3,3 +3,5 @@ pub trait Trace {
 }
 
 impl Trace for u32 {}
+
+impl Trace for bool {}
