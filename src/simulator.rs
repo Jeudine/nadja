@@ -1,9 +1,13 @@
 use super::process;
+use crate::module;
 
+//TODO liftetime either all static or all 'a
+#[derive(Default)]
 pub struct Simulator<'a> {
-    modified: Vec<&'a mut dyn Update>,
+    modified: Vec<&'a dyn Update>,
     queue_schedule: Vec<Vec<&'static dyn process::Process>>,
     process_queue: Vec<&'static dyn process::Process>,
+    modules: Vec<&'a module::Module>,
     duration: usize,
 }
 
@@ -11,7 +15,7 @@ impl<'a> Simulator<'a> {
     fn update(&mut self) {
         let processes = &mut self.process_queue;
         self.modified
-            .iter_mut()
+            .iter()
             .map(|x| x.update())
             .for_each(|x| match x {
                 Some(p) => {
@@ -26,7 +30,7 @@ impl<'a> Simulator<'a> {
         self.modified = Vec::new();
     }
 
-    pub fn push(&mut self, u: &'a mut dyn Update) {
+    pub fn push(&mut self, u: &'a dyn Update) {
         self.modified.push(u);
     }
 
@@ -39,6 +43,7 @@ impl<'a> Simulator<'a> {
     /// Executes the processes in the process queue and empties it.
     /// Returns false if the process queue is initially empty, true otherwise.
     fn execute(&mut self) -> bool {
+        /*
         if self.process_queue.is_empty() {
             false
         } else {
@@ -59,9 +64,12 @@ impl<'a> Simulator<'a> {
             self.process_queue = Vec::new();
             true
         }
+        */
+        //TOREMOVE:
+        true
     }
 
-    // Prevent user to start two times the simulation
+    // TODO: Prevent user to start two times the simulation
     pub fn start(&mut self, duration: usize) {
         self.process_queue = Vec::with_capacity(duration);
         self.duration = duration;
@@ -79,5 +87,5 @@ impl<'a> Simulator<'a> {
 }
 
 pub trait Update {
-    fn update(&mut self) -> Option<&[&'static dyn process::Process]>;
+    fn update(& self) -> Option<&[&'static dyn process::Process]>;
 }

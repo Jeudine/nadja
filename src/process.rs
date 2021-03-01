@@ -1,4 +1,5 @@
 use super::simulator;
+use crate::module;
 pub mod always;
 pub mod initial;
 
@@ -6,5 +7,5 @@ pub mod initial;
 /// In case the execution stops on a break, returns the duration of the break, otherwise return
 /// None.
 pub trait Process {
-    fn execute(&self, simulator: &mut simulator::Simulator) -> Option<usize>;
+    fn execute(&self, module: & module::Module, simulator: &mut simulator::Simulator) -> Option<usize>;
 }

@@ -1,12 +1,14 @@
-use super::process;
+use super::process::Process;
 use super::simulator;
 use super::trace;
 use std::fmt;
+use std::cell::Cell;
 
+//TODO Take a look at update method from cell
 pub struct Signal<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> {
-    cur_val: T,
-    new_val: T,
-    sensitivity: Vec<&'static dyn process::Process>,
+    cur_val: Cell<T>,
+    new_val: Cell<T>,
+    sensitivity: Vec<&'static dyn Process>,
 }
 
 impl<T> Signal<T>
@@ -14,16 +16,23 @@ where
     T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
 {
     pub fn read(&self) -> T {
-        self.cur_val
+        self.cur_val.get()
     }
 
-    pub fn write<'a>(&'a mut self, v: T, simulator: &mut simulator::Simulator<'a>) {
+    pub fn write<'a>(&'a self, v: T, simulator: &mut simulator::Simulator<'a>) {
         // can be optimized
-        self.new_val = v;
+        // TODO: if write is call two times
+        self.new_val.set(v);
         simulator.push(self);
     }
 
-    pub fn add_process(&mut self, p: &'static dyn process::Process) {
+    /*
+    pub fn block_write<'a>(&'a mut self, v: T) {
+        self.cur_val = v;
+    }
+    */
+
+    pub fn add_process(&mut self, p: &'static dyn Process) {
         self.sensitivity.push(p);
     }
 }
@@ -42,7 +51,7 @@ where
     T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
 {
     fn default() -> Self {
-        Signal {
+        Self {
             cur_val: Default::default(),
             new_val: Default::default(),
             sensitivity: Default::default(),
@@ -55,7 +64,7 @@ where
     T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.cur_val.fmt(f)
+        self.cur_val.get().fmt(f)
     }
 }
 
@@ -63,9 +72,9 @@ impl<T> simulator::Update for Signal<T>
 where
     T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
 {
-    fn update(&mut self) -> Option<&[&'static dyn process::Process]> {
-        if self.cur_val != self.new_val {
-            self.cur_val = self.new_val;
+    fn update(& self) -> Option<&[&'static dyn Process]> {
+        if self.cur_val.get() != self.new_val.get() {
+            self.cur_val.set(self.new_val.get());
             Option::Some(&self.sensitivity[..])
         } else {
             Option::None

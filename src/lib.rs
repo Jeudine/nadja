@@ -13,6 +13,8 @@ mod tests {
     use crate::signal::Signal;
     use crate::simulator::Simulator;
     use crate::process::always::Always;
+    use std::cell::RefCell;
+    use std::cell::Cell;
 
     fn process(sim: &mut Simulator) {
 
@@ -20,11 +22,12 @@ mod tests {
 
     #[derive(Default)]
     struct Module {
-        s: Signal<u32>,
+        pub s: RefCell<Signal<u32>>,
+        pub t: RefCell<Signal<u32>>,
     }
 
     impl Module {
-        fn process<'a>(&'a mut self, sim: &mut Simulator<'a>) {
+        fn process<'a>(&'a self, sim: &mut Simulator<'a>) {
             //self.s.write(0, sim);
         }
 
@@ -34,26 +37,26 @@ mod tests {
 
     }
 
+    #[derive(Default)]
+    struct Sig {
+        pub fut: Cell<u32>,
+        pub cur: Cell<u32>,
+    }
+
     #[test]
     fn it_works() {
         let mut sim: Simulator = Default::default();
         //let sim = &mut sim;
         let mut m: Module = Default::default();
+        //m.s.get_mut().write(0, &mut sim);
+        //m.t.write(0, &mut sim);
         let p = |x, y| {Module::process(x, y);};
-        p(&mut m, &mut sim);
-        //p(3333333333);
+        //p(& m, &mut sim);
+        //let p: Always = Always::new(|x, y| {Module::process(x, y);});
+        //let k = &mut m;
         //let p: Always = Always::new(|x| m.process(x));
-        let mut s: Signal<u32> = Default::default();
-        let mut t: Signal<u32> = Default::default();
-        let a: u32 = 0;
-        let b: u32 = 0;
-        s.write(a, &mut sim);
-        t.write(b, &mut sim);
-        let x = s.read();
-        let y = s.read();
-        println!("This is a test: {}", x);
-        println!("{}", y);
-        println!("{}", a);
+        let sig: Sig = Default::default();
+        let fut = sig.fut.set(7);
         assert_eq!(2 + 2, 4);
     }
 }
