@@ -1,5 +1,4 @@
 use super::process;
-use crate::module;
 
 //TODO liftetime either all static or all 'a
 #[derive(Default)]
@@ -7,7 +6,6 @@ pub struct Simulator<'a> {
     modified: Vec<&'a dyn Update>,
     queue_schedule: Vec<Vec<&'static dyn process::Process>>,
     process_queue: Vec<&'static dyn process::Process>,
-    modules: Vec<&'a module::Module>,
     duration: usize,
 }
 

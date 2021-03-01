@@ -22,8 +22,8 @@ mod tests {
 
     #[derive(Default)]
     struct Module {
-        pub s: RefCell<Signal<u32>>,
-        pub t: RefCell<Signal<u32>>,
+        pub s: Signal<u32>,
+        pub t: Signal<u32>,
     }
 
     impl Module {
@@ -47,10 +47,11 @@ mod tests {
     fn it_works() {
         let mut sim: Simulator = Default::default();
         //let sim = &mut sim;
-        let mut m: Module = Default::default();
+        let m: Module = Default::default();
         //m.s.get_mut().write(0, &mut sim);
         //m.t.write(0, &mut sim);
-        let p = |x, y| {Module::process(x, y);};
+        let p = |x| {Module::process(&m, x);};
+        p(&mut sim);
         //p(& m, &mut sim);
         //let p: Always = Always::new(|x, y| {Module::process(x, y);});
         //let k = &mut m;
