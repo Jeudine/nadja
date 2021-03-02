@@ -5,7 +5,6 @@ use crate::simulable::{Channel, Notify, Simulable};
 use std::cell::Cell;
 use std::fmt::{Display, Formatter, Result};
 
-//TODO Take a look at update method from cell
 pub struct Signal<'a, T: Copy + PartialEq + Default + Display + Trace> {
     cur_val: Cell<T>,
     new_val: Cell<T>,
@@ -38,7 +37,7 @@ impl<'a, T> Notify<'a> for Signal<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
-    fn update(&self) -> Option<&[&dyn Process<'a>]> {
+    fn trigger(&self) -> Option<&[&dyn Process<'a>]> {
         if self.cur_val.get() != self.new_val.get() {
             self.cur_val.set(self.new_val.get());
             Option::Some(&self.sensitivity[..])
@@ -56,11 +55,21 @@ where
         self.cur_val.get()
     }
 
-    fn write(&'a self, val: T, simulator: &mut Simulator<'a>) {
+    fn write(&'a self, val: T, simulator: &mut Simulator<'a>) -> T {
         // can be optimized
         // TODO: if write is call two times
         self.new_val.set(val);
         simulator.push(self);
+        val
+    }
+
+    fn update(&'a self, f: & dyn Fn(T) -> T, simulator: &mut Simulator<'a>) -> T {
+        // can be optimized
+        // TODO: if write is call two times
+        let val = f(self.cur_val.get());
+        self.new_val.set(val);
+        simulator.push(self);
+        val
     }
 }
 

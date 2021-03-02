@@ -35,7 +35,7 @@ impl<'a, T> Notify<'a> for Wire<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
-    fn update(&self) -> Option<&[&dyn Process<'a>]> {
+    fn trigger(&self) -> Option<&[&dyn Process<'a>]> {
         Option::Some(&self.sensitivity[..])
     }
 }
@@ -48,11 +48,21 @@ where
         self.val.get()
     }
 
-    fn write(&'a self, val: T, simulator: &mut Simulator<'a>) {
+    fn write(&'a self, val: T, simulator: &mut Simulator<'a>) -> T {
         // can be optimized
         // TODO: if write is call two times
         self.val.set(val);
         simulator.push(self);
+        val
+    }
+
+    fn update(&'a self, f: &dyn Fn(T) -> T, simulator: &mut Simulator<'a>) -> T {
+        // can be optimized
+        // TODO
+        let val = f(self.val.get());
+        self.val.set(val);
+        simulator.push(self);
+        val
     }
 }
 

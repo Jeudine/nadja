@@ -1,4 +1,3 @@
-pub mod clock;
 pub mod process;
 pub mod signal;
 pub mod simulable;
@@ -11,6 +10,7 @@ pub use crate::signal::Signal;
 #[cfg(test)]
 mod tests {
     use crate::process::register::Reg;
+    use crate::process::clock::Clk;
     use crate::signal::Signal;
     use crate::wire::Wire;
     use crate::simulator::Simulator;
@@ -28,5 +28,8 @@ mod tests {
         let r2 = Reg::new(&s3, &s2);
 
         let clk = Wire::new(true, &[&r1, &r2]);
+        let clk_p = Clk::new(&clk, 2);
+        sim.start(8, &[&clk_p]);
+
     }
 }

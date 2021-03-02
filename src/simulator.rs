@@ -15,7 +15,7 @@ impl<'a> Simulator<'a> {
         let processes = &mut self.process_queue;
         self.modified
             .iter()
-            .map(|x| x.update())
+            .map(|x| x.trigger())
             .for_each(|x| match x {
                 Some(p) => {
                     let p_f: Vec<_> = p
@@ -65,9 +65,11 @@ impl<'a> Simulator<'a> {
     }
 
     // TODO: Prevent user to start two times the simulation
-    pub fn start(&mut self, duration: usize) {
+    // TODO: write a new
+    pub fn start(&mut self, duration: usize, init: &[&'a dyn Process<'a>]) {
         self.process_queue = Vec::with_capacity(duration);
         self.duration = duration;
+        self.process_queue = init.to_vec();
         //add the initial processes
         for _ in 0..duration {
             self.process_queue = match self.queue_schedule.pop() {
