@@ -1,25 +1,25 @@
 use super::process::Process;
 use super::simulator;
-use super::trace;
-use std::fmt;
+use super::trace::Trace;
 use std::cell::Cell;
+use std::fmt::{Display, Result, Formatter};
 
 //TODO Take a look at update method from cell
-pub struct Signal<T: Copy + PartialEq + Default + fmt::Display + trace::Trace> {
+pub struct Signal<'a, T: Copy + PartialEq + Default + Display + Trace> {
     cur_val: Cell<T>,
     new_val: Cell<T>,
-    sensitivity: Vec<&'static dyn Process>,
+    sensitivity: Vec<&'a dyn Process<'a>>,
 }
 
-impl<T> Signal<T>
+impl<'a, T> Signal<'a, T>
 where
-    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+    T: Copy + PartialEq + Default + Display + Trace,
 {
     pub fn read(&self) -> T {
         self.cur_val.get()
     }
 
-    pub fn write<'a>(&'a self, v: T, simulator: &mut simulator::Simulator<'a>) {
+    pub fn write(&'a self, v: T, simulator: &mut simulator::Simulator<'a>) {
         // can be optimized
         // TODO: if write is call two times
         self.new_val.set(v);
@@ -32,23 +32,25 @@ where
     }
     */
 
+    /*
     pub fn add_process(&mut self, p: &'static dyn Process) {
         self.sensitivity.push(p);
     }
+    */
 }
 
-impl<T> PartialEq for Signal<T>
+impl<'a, T> PartialEq for Signal<'a, T>
 where
-    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+    T: Copy + PartialEq + Default + Display + Trace,
 {
     fn eq(&self, other: &Self) -> bool {
         self.cur_val == other.cur_val
     }
 }
 
-impl<T> Default for Signal<T>
+impl<'a, T> Default for Signal<'a, T>
 where
-    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+    T: Copy + PartialEq + Default + Display + Trace,
 {
     fn default() -> Self {
         Self {
@@ -59,20 +61,20 @@ where
     }
 }
 
-impl<T> fmt::Display for Signal<T>
+impl<'a, T> Display for Signal<'a, T>
 where
-    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+    T: Copy + PartialEq + Default + Display + Trace,
 {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         self.cur_val.get().fmt(f)
     }
 }
 
-impl<T> simulator::Update for Signal<T>
+impl<'a, T> simulator::Update<'a> for Signal<'a, T>
 where
-    T: Copy + PartialEq + Default + fmt::Display + trace::Trace,
+    T: Copy + PartialEq + Default + Display + Trace,
 {
-    fn update(& self) -> Option<&[&'static dyn Process]> {
+    fn update(&self) -> Option<&[& dyn Process<'a>]> {
         if self.cur_val.get() != self.new_val.get() {
             self.cur_val.set(self.new_val.get());
             Option::Some(&self.sensitivity[..])

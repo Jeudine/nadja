@@ -1,5 +1,5 @@
-use crate::signal;
 use crate::process;
+use crate::signal;
 use crate::simulator;
 use std::cell;
 
@@ -47,4 +47,3 @@ impl process::Process for ClockProcess {
 
 // Dans le constructor donner une reference du signal
 */
-

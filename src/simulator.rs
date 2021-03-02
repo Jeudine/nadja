@@ -1,11 +1,11 @@
-use super::process;
+use super::process::Process;
 
 //TODO liftetime either all static or all 'a
 #[derive(Default)]
 pub struct Simulator<'a> {
-    modified: Vec<&'a dyn Update>,
-    queue_schedule: Vec<Vec<&'static dyn process::Process>>,
-    process_queue: Vec<&'static dyn process::Process>,
+    modified: Vec<&'a dyn Update<'a>>,
+    queue_schedule: Vec<Vec<&'a dyn Process<'a>>>,
+    process_queue: Vec<&'a dyn Process<'a>>,
     duration: usize,
 }
 
@@ -28,11 +28,11 @@ impl<'a> Simulator<'a> {
         self.modified = Vec::new();
     }
 
-    pub fn push(&mut self, u: &'a dyn Update) {
+    pub fn push(&mut self, u: &'a dyn Update<'a>) {
         self.modified.push(u);
     }
 
-    pub fn schedule_process(&mut self, p: &'static dyn process::Process, duration: usize) {
+    pub fn schedule_process(&mut self, p: &'a dyn Process<'a>, duration: usize) {
         if self.duration >= duration {
             self.queue_schedule[self.duration - duration].push(p);
         }
@@ -41,7 +41,6 @@ impl<'a> Simulator<'a> {
     /// Executes the processes in the process queue and empties it.
     /// Returns false if the process queue is initially empty, true otherwise.
     fn execute(&mut self) -> bool {
-        /*
         if self.process_queue.is_empty() {
             false
         } else {
@@ -62,9 +61,6 @@ impl<'a> Simulator<'a> {
             self.process_queue = Vec::new();
             true
         }
-        */
-        //TOREMOVE:
-        true
     }
 
     // TODO: Prevent user to start two times the simulation
@@ -84,6 +80,6 @@ impl<'a> Simulator<'a> {
     }
 }
 
-pub trait Update {
-    fn update(& self) -> Option<&[&'static dyn process::Process]>;
+pub trait Update<'a> {
+    fn update(&self) -> Option<&[& dyn Process<'a>]>;
 }
