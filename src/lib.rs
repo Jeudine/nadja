@@ -28,7 +28,7 @@ mod tests {
         let r2 = Reg::new(&s3, &s2);
 
         let clk = Wire::new(true, &[&r1, &r2]);
-        let clk_p = Clk::new(&clk, 2);
+        let clk_p = Clk::new(&clk, 1);
         sim.start(8, &[&clk_p]);
 
     }

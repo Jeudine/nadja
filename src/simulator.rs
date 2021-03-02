@@ -67,18 +67,19 @@ impl<'a> Simulator<'a> {
     // TODO: Prevent user to start two times the simulation
     // TODO: write a new
     pub fn start(&mut self, duration: usize, init: &[&'a dyn Process<'a>]) {
-        self.process_queue = Vec::with_capacity(duration);
+        self.queue_schedule.resize_with(duration, Default::default);
         self.duration = duration;
-        self.process_queue = init.to_vec();
+        self.queue_schedule.push(init.to_vec());
         //add the initial processes
         for _ in 0..duration {
             self.process_queue = match self.queue_schedule.pop() {
                 Some(queue) => queue,
-                None => panic!("Unexpected error!"),
+                None => Default::default(),
             };
             while self.execute() {
                 self.update();
             }
+            self.duration = self.duration - 1;
         }
     }
 }

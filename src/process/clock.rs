@@ -16,6 +16,7 @@ impl<'a> Clk<'a>
 
 impl<'a> Process<'a> for Clk<'a> {
     fn execute(&self, simulator: &mut Simulator<'a>) -> Option<usize> {
+        println!("clk: {}", self.clk);
         self.clk.update(&|x:bool| !x, simulator);
         Some(self.half_period)
     }
