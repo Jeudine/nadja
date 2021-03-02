@@ -1,9 +1,10 @@
 use super::process::Process;
+use crate::simulable::Notify;
 
 //TODO liftetime either all static or all 'a
 #[derive(Default)]
 pub struct Simulator<'a> {
-    modified: Vec<&'a dyn Update<'a>>,
+    modified: Vec<&'a dyn Notify<'a>>,
     queue_schedule: Vec<Vec<&'a dyn Process<'a>>>,
     process_queue: Vec<&'a dyn Process<'a>>,
     duration: usize,
@@ -28,7 +29,7 @@ impl<'a> Simulator<'a> {
         self.modified = Vec::new();
     }
 
-    pub fn push(&mut self, u: &'a dyn Update<'a>) {
+    pub fn push(&mut self, u: &'a dyn Notify<'a>) {
         self.modified.push(u);
     }
 
@@ -78,8 +79,4 @@ impl<'a> Simulator<'a> {
             }
         }
     }
-}
-
-pub trait Update<'a> {
-    fn update(&self) -> Option<&[& dyn Process<'a>]>;
 }

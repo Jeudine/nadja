@@ -5,73 +5,64 @@ use crate::simulable::{Channel, Notify, Simulable};
 use std::cell::Cell;
 use std::fmt::{Display, Formatter, Result};
 
-//TODO Take a look at update method from cell
-pub struct Signal<'a, T: Copy + PartialEq + Default + Display + Trace> {
-    cur_val: Cell<T>,
-    new_val: Cell<T>,
+pub struct Wire<'a, T: Copy + PartialEq + Default + Display + Trace> {
+    val: Cell<T>,
     sensitivity: Vec<&'a dyn Process<'a>>,
 }
 
-impl<'a, T> Display for Signal<'a, T>
+impl<'a, T> Display for Wire<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        self.cur_val.get().fmt(f)
+        self.val.get().fmt(f)
     }
 }
 
-impl<'a, T> Default for Signal<'a, T>
+impl<'a, T> Default for Wire<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
     fn default() -> Self {
         Self {
-            cur_val: Default::default(),
-            new_val: Default::default(),
+            val: Default::default(),
             sensitivity: Default::default(),
         }
     }
 }
 
-impl<'a, T> Notify<'a> for Signal<'a, T>
+impl<'a, T> Notify<'a> for Wire<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
     fn update(&self) -> Option<&[&dyn Process<'a>]> {
-        if self.cur_val.get() != self.new_val.get() {
-            self.cur_val.set(self.new_val.get());
-            Option::Some(&self.sensitivity[..])
-        } else {
-            Option::None
-        }
+        Option::Some(&self.sensitivity[..])
     }
 }
 
-impl<'a, T> Channel<'a, T> for Signal<'a, T>
+impl<'a, T> Channel<'a, T> for Wire<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
     fn read(&self) -> T {
-        self.cur_val.get()
+        self.val.get()
     }
 
     fn write(&'a self, val: T, simulator: &mut Simulator<'a>) {
         // can be optimized
         // TODO: if write is call two times
-        self.new_val.set(val);
+        self.val.set(val);
         simulator.push(self);
     }
 }
 
-impl<'a, T> Simulable<'a, T> for Signal<'a, T>
+impl<'a, T> Simulable<'a, T> for Wire<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
     fn new(val: T, sensitivity: &[&'a dyn Process<'a>]) -> Self {
         Self {
-            cur_val: Cell::new(val),
-            new_val: Cell::new(val),
+            val: Cell::new(val),
             sensitivity: sensitivity.to_vec(),
         }
     }
