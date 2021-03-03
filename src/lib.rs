@@ -1,20 +1,20 @@
 pub mod process;
 pub mod signal;
-pub mod simulable;
+pub mod interface;
 pub mod simulator;
 pub mod trace;
-pub mod wire;
+pub mod gate;
 
 pub use crate::signal::Signal;
 
 #[cfg(test)]
 mod tests {
-    use crate::process::register::Reg;
     use crate::process::clock::Clk;
+    use crate::process::register::Reg;
     use crate::signal::Signal;
-    use crate::wire::Wire;
-    use crate::simulator::Simulator;
     use crate::simulable::Simulable;
+    use crate::simulator::Simulator;
+    use crate::wire::Wire;
 
     #[test]
     fn it_works() {
@@ -30,6 +30,5 @@ mod tests {
         let clk = Wire::new(true, &[&r1, &r2]);
         let clk_p = Clk::new(&clk, 1);
         sim.start(8, &[&clk_p]);
-
     }
 }

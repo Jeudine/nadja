@@ -1,7 +1,7 @@
 use super::process::Process;
 use super::simulator::Simulator;
 use super::trace::Trace;
-use crate::simulable::{Channel, Notify, Simulable};
+use crate::interface::{Channel, Notify, Simulable};
 use std::cell::Cell;
 use std::fmt::{Display, Formatter, Result};
 
@@ -54,23 +54,6 @@ where
     fn read(&self) -> T {
         self.cur_val.get()
     }
-
-    fn write(&'a self, val: T, simulator: &mut Simulator<'a>) -> T {
-        // can be optimized
-        // TODO: if write is call two times
-        self.new_val.set(val);
-        simulator.push(self);
-        val
-    }
-
-    fn update(&'a self, f: & dyn Fn(T) -> T, simulator: &mut Simulator<'a>) -> T {
-        // can be optimized
-        // TODO: if write is call two times
-        let val = f(self.cur_val.get());
-        self.new_val.set(val);
-        simulator.push(self);
-        val
-    }
 }
 
 impl<'a, T> Simulable<'a, T> for Signal<'a, T>
@@ -83,5 +66,22 @@ where
             new_val: Cell::new(val),
             sensitivity: sensitivity.to_vec(),
         }
+    }
+
+    fn write(&'a self, val: T, simulator: &mut Simulator<'a>) -> T {
+        // can be optimized
+        // TODO: if write is call two times
+        self.new_val.set(val);
+        simulator.push(self);
+        val
+    }
+
+    fn update(&'a self, f: &dyn Fn(T) -> T, simulator: &mut Simulator<'a>) -> T {
+        // can be optimized
+        // TODO: if write is call two times
+        let val = f(self.cur_val.get());
+        self.new_val.set(val);
+        simulator.push(self);
+        val
     }
 }

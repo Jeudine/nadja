@@ -1,5 +1,5 @@
-use super::process::Process;
-use crate::simulable::Notify;
+use crate::process::Process;
+use crate::interface::Notify;
 
 //TODO liftetime either all static or all 'a
 #[derive(Default)]
