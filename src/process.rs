@@ -1,6 +1,5 @@
 use super::simulator::Simulator;
 
-pub mod clock;
 pub mod register;
 
 /// Executes the process until the end or a break.

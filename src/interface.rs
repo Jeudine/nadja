@@ -3,10 +3,6 @@ use super::simulator::Simulator;
 use super::trace::Trace;
 use std::fmt::{Display, Formatter, Result};
 
-pub trait Notify<'a> {
-    fn trigger(&self) -> Option<&[&dyn Process<'a>]>;
-}
-
 pub trait Channel<'a, T: Copy + PartialEq + Display> {
     fn read(&self) -> T;
 }
@@ -18,6 +14,10 @@ where
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         self.read().fmt(f)
     }
+}
+
+pub trait Notify<'a> {
+    fn trigger(&self) -> &[&dyn Process<'a>];
 }
 
 pub trait Simulable<'a, T: Copy + PartialEq + Display + Default + Trace>:

@@ -37,12 +37,12 @@ impl<'a, T> Notify<'a> for Signal<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
-    fn trigger(&self) -> Option<&[&dyn Process<'a>]> {
+    fn trigger(&self) -> &[&dyn Process<'a>] {
         if self.cur_val.get() != self.new_val.get() {
             self.cur_val.set(self.new_val.get());
-            Option::Some(&self.sensitivity[..])
+            &self.sensitivity[..]
         } else {
-            Option::None
+            &[]
         }
     }
 }

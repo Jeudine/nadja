@@ -1,5 +1,5 @@
-use crate::process::Process;
 use crate::interface::Notify;
+use crate::process::Process;
 
 //TODO liftetime either all static or all 'a
 #[derive(Default)]
@@ -13,19 +13,13 @@ pub struct Simulator<'a> {
 impl<'a> Simulator<'a> {
     fn update(&mut self) {
         let processes = &mut self.process_queue;
-        self.modified
-            .iter()
-            .map(|x| x.trigger())
-            .for_each(|x| match x {
-                Some(p) => {
-                    let p_f: Vec<_> = p
-                        .iter()
-                        .filter(|x| processes.iter().all(|y| !std::ptr::eq(*x, y)))
-                        .collect();
-                    processes.extend(p_f)
-                }
-                None => (),
-            });
+        self.modified.iter().map(|x| x.trigger()).for_each(|x| {
+            processes.extend(
+                x.iter()
+                    .filter(|x| processes.iter().all(|y| !std::ptr::eq(*x, y)))
+                    .collect::<Vec<_>>(),
+            )
+        });
         self.modified = Vec::new();
     }
 

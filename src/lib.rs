@@ -1,18 +1,19 @@
+pub mod gate;
+pub mod interface;
 pub mod process;
 pub mod signal;
-pub mod interface;
 pub mod simulator;
 pub mod trace;
-pub mod gate;
+pub mod wire;
 
 pub use crate::signal::Signal;
 
 #[cfg(test)]
 mod tests {
+    use crate::interface::Simulable;
     use crate::process::clock::Clk;
     use crate::process::register::Reg;
     use crate::signal::Signal;
-    use crate::simulable::Simulable;
     use crate::simulator::Simulator;
     use crate::wire::Wire;
 

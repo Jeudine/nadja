@@ -1,7 +1,7 @@
+use crate::interface::Channel;
+use crate::interface::Simulable;
 use crate::process::Process;
 use crate::signal::Signal;
-use crate::interface::Simulable;
-use crate::interface::Channel;
 use crate::simulator::Simulator;
 use crate::trace::Trace;
 use std::fmt::Display;

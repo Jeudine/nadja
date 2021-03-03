@@ -4,7 +4,7 @@ use crate::signal::Signal;
 use crate::interface::Simulable;
 
 pub struct Clk<'a> {
-    clk: &'a Signal<'a, bool>,
+    clk: &'a dyn Simulable<'a, bool>,
     half_period: usize,
 }
 
