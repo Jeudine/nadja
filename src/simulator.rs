@@ -1,7 +1,6 @@
 use crate::interface::Notify;
 use crate::process::Process;
 
-//TODO liftetime either all static or all 'a
 #[derive(Default)]
 pub struct Simulator<'a> {
     modified: Vec<&'a dyn Notify<'a>>,

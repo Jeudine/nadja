@@ -1,7 +1,7 @@
 [package]
 name = "nadja"
 version = "0.1.0"
-authors = ["Julien Eudine <jeudine@student.ethz.ch>"]
+authors = ["Julien Eudine <julien@eudine.fr>"]
 edition = "2018"
 readme = "README.adoc"
 
