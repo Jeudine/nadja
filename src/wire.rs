@@ -5,12 +5,32 @@ use crate::interface::{Channel, Notify, Simulable};
 use std::cell::Cell;
 use std::fmt::{Display, Formatter, Result};
 
-pub struct Wire<'a, T: Copy + PartialEq + Display> {
+pub struct Wire<T: Copy + PartialEq + Display> {
     val: Cell<T>,
-    sensitivity: Vec<&'a dyn Process<'a>>,
 }
 
-impl<'a, T> Display for Wire<'a, T>
+impl<T> Wire<T>
+where
+    T: Copy + PartialEq + Default + Display + Trace,
+{
+    pub fn new(val: T) -> Self {
+        Self {
+            val: Cell::new(val),
+        }
+    }
+
+    pub fn write(&self, val: T) -> T {
+        self.val.set(val);
+        val
+    }
+    pub fn update(&self, f: &dyn Fn(T) -> T) -> T {
+        let val = f(self.val.get());
+        self.val.set(val);
+        val
+    }
+}
+
+impl<T> Display for Wire<T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
@@ -19,7 +39,41 @@ where
     }
 }
 
-impl<'a, T> Default for Wire<'a, T>
+impl<T> Default for Wire<T>
+where
+    T: Copy + PartialEq + Default + Display + Trace,
+{
+    fn default() -> Self {
+        Self {
+            val: Default::default(),
+        }
+    }
+}
+
+impl<T> Channel<T> for Wire<T>
+where
+    T: Copy + PartialEq + Default + Display + Trace,
+{
+    fn read(&self) -> T {
+        self.val.get()
+    }
+}
+
+pub struct WireTrig<'a, T: Copy + PartialEq + Display> {
+    val: Cell<T>,
+    sensitivity: Vec<&'a dyn Process<'a>>,
+}
+
+impl<'a, T> Display for WireTrig<'a, T>
+where
+    T: Copy + PartialEq + Default + Display + Trace,
+{
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        self.val.get().fmt(f)
+    }
+}
+
+impl<'a, T> Default for WireTrig<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
@@ -31,7 +85,7 @@ where
     }
 }
 
-impl<'a, T> Notify<'a> for Wire<'a, T>
+impl<'a, T> Notify<'a> for WireTrig<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
@@ -40,7 +94,7 @@ where
     }
 }
 
-impl<'a, T> Channel<'a, T> for Wire<'a, T>
+impl<'a, T> Channel<T> for WireTrig<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
@@ -49,7 +103,7 @@ where
     }
 }
 
-impl<'a, T> Simulable<'a, T> for Wire<'a, T>
+impl<'a, T> Simulable<'a, T> for WireTrig<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {

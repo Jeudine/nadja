@@ -1,6 +1,6 @@
+use crate::interface::Notify;
 use crate::process::Process;
 use crate::simulator::Simulator;
-use crate::interface::Notify;
 use std::cell::Cell;
 
 pub struct Clk<'a> {
@@ -11,8 +11,17 @@ pub struct Clk<'a> {
 }
 
 impl<'a> Clk<'a> {
-    pub fn new(half_period: usize, posedge_sensitivity: &[&'a dyn Process<'a>], negedge_sensitivity: &[&'a dyn Process<'a>]) -> Self {
-        Self { clk: Cell::new(true), half_period: half_period, posedge_sensitivity: posedge_sensitivity.to_vec(), negedge_sensitivity: negedge_sensitivity.to_vec() }
+    pub fn new(
+        half_period: usize,
+        posedge_sensitivity: &[&'a dyn Process<'a>],
+        negedge_sensitivity: &[&'a dyn Process<'a>],
+    ) -> Self {
+        Self {
+            clk: Cell::new(true),
+            half_period: half_period,
+            posedge_sensitivity: posedge_sensitivity.to_vec(),
+            negedge_sensitivity: negedge_sensitivity.to_vec(),
+        }
     }
 }
 
@@ -25,8 +34,7 @@ impl<'a> Process<'a> for Clk<'a> {
     }
 }
 
-impl<'a> Notify<'a> for Clk<'a>
-{
+impl<'a> Notify<'a> for Clk<'a> {
     fn trigger(&self) -> &[&dyn Process<'a>] {
         if self.clk.get() {
             &self.posedge_sensitivity[..]

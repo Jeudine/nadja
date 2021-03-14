@@ -3,16 +3,16 @@ use std::fmt::Display;
 use std::ops::{BitAnd, BitOr};
 
 struct And<'a, T: Copy + PartialEq + Display + BitAnd + BitAnd<Output = T>> {
-    in1: &'a dyn Channel<'a, T>,
-    in2: &'a dyn Channel<'a, T>,
+    in1: &'a dyn Channel<T>,
+    in2: &'a dyn Channel<T>,
 }
 
 struct Or<'a, T: Copy + PartialEq + Display + BitOr + BitOr<Output = T>> {
-    in1: &'a dyn Channel<'a, T>,
-    in2: &'a dyn Channel<'a, T>,
+    in1: &'a dyn Channel<T>,
+    in2: &'a dyn Channel<T>,
 }
 
-impl<'a, T> Channel<'a, T> for And<'a, T>
+impl<'a, T> Channel<T> for And<'a, T>
 where
     T: Copy + PartialEq + Display + BitAnd + BitAnd<Output = T>,
 {
@@ -21,7 +21,7 @@ where
     }
 }
 
-impl<'a, T> Channel<'a, T> for Or<'a, T>
+impl<'a, T> Channel<T> for Or<'a, T>
 where
     T: Copy + PartialEq + Display + BitOr + BitOr<Output = T>,
 {

@@ -47,7 +47,7 @@ where
     }
 }
 
-impl<'a, T> Channel<'a, T> for Signal<'a, T>
+impl<'a, T> Channel<T> for Signal<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {

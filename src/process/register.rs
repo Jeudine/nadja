@@ -7,7 +7,7 @@ use crate::trace::Trace;
 use std::fmt::Display;
 
 pub struct Reg<'a, T: Copy + PartialEq + Default + Display + Trace> {
-    d: &'a dyn Channel<'a, T>,
+    d: &'a dyn Channel<T>,
     q: &'a Signal<'a, T>,
 }
 
@@ -15,7 +15,7 @@ impl<'a, T> Reg<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
-    pub fn new(d: &'a dyn Channel<'a, T>, q: &'a Signal<'a, T>) -> Self {
+    pub fn new(d: &'a dyn Channel<T>, q: &'a Signal<'a, T>) -> Self {
         Self { d: d, q: q }
     }
 }
@@ -30,31 +30,31 @@ where
     }
 }
 
-pub struct RegEn<'a, T: Copy + PartialEq + Default + Display + Trace> {
-    d: &'a dyn Channel<'a, T>,
+pub struct RegRst<'a, T: Copy + PartialEq + Default + Display + Trace> {
+    d: &'a dyn Channel<T>,
     q: &'a Signal<'a, T>,
-    en: &'a dyn Channel<'a, bool>,
+    rst: &'a dyn Channel<bool>,
 }
 
-impl<'a, T> RegEn<'a, T>
+impl<'a, T> RegRst<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
-    pub fn new(
-        d: &'a dyn Channel<'a, T>,
-        q: &'a Signal<'a, T>,
-        en: &'a dyn Channel<'a, bool>,
-    ) -> Self {
-        Self { d: d, q: q, en: en }
+    pub fn new(d: &'a dyn Channel<T>, q: &'a Signal<'a, T>, rst: &'a dyn Channel<bool>) -> Self {
+        Self {
+            d: d,
+            q: q,
+            rst: rst,
+        }
     }
 }
 
-impl<'a, T> Process<'a> for RegEn<'a, T>
+impl<'a, T> Process<'a> for RegRst<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {
     fn execute(&self, simulator: &mut Simulator<'a>) -> Option<usize> {
-        if self.en.read() {
+        if self.rst.read() {
             self.q.write(self.d.read(), simulator);
         }
         None
