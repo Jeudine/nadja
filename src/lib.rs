@@ -31,7 +31,8 @@ mod tests {
         let r2 = RegRst::new(&s3, &s2, &rst_n);
 
         let clk = Clk::new(2, &[&r1, &r2], &[]);
-        let rst_n_proc = Rst::new(&rst_n, false, &[&r1, &r2]);
-        sim.start(8, &[&clk]);
+        let rst_n_proc = Rst::new(&rst_n, false, 2, 2, &[&r1, &r2]);
+
+        sim.start(20, &[&clk, &rst_n_proc]);
     }
 }

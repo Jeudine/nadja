@@ -26,9 +26,9 @@ impl<'a> Simulator<'a> {
         self.modified.push(u);
     }
 
-    pub fn schedule_process(&mut self, p: &'a dyn Process<'a>, duration: usize) {
-        if self.duration >= duration {
-            self.queue_schedule[self.duration - duration].push(p);
+    pub fn schedule_process(&mut self, p: &'a dyn Process<'a>, date: usize) {
+        if self.duration >= date {
+            self.queue_schedule[self.duration - date].push(p);
         }
     }
 
