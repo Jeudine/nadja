@@ -3,8 +3,11 @@
 In Russian Nadja is the beginning of the word hope, but it's also the name of an event driven simulator written in Rust.
 
 
-== TO DO:
+== TODO
 
 * Add macros
 * Add a wait macro
 * Add a notion of time scale
+* Create a logic type
+* Generate trace files
+* Generate SystemVerilog code
