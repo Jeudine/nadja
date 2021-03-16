@@ -1,78 +1,96 @@
-use crate::interface::Notify;
+use crate::interface::Event;
 use crate::process::Process;
 
-#[derive(Default)]
 pub struct Simulator<'a> {
-    modified: Vec<&'a dyn Notify<'a>>,
-    queue_schedule: Vec<Vec<&'a dyn Process<'a>>>,
-    process_queue: Vec<&'a dyn Process<'a>>,
+    events: Vec<&'a dyn Event<'a>>,
+    schedule: Vec<Vec<&'a dyn Process<'a>>>,
+    cur_procs: Vec<&'a dyn Process<'a>>,
+    next_delta_procs: Vec<&'a dyn Process<'a>>,
     duration: usize,
+    date: usize,
 }
 
+/// Updates the variables in the events vector.
+/// Adds the processes triggered by the updated values to the cur_procs vector.
 impl<'a> Simulator<'a> {
     fn update(&mut self) {
-        let processes = &mut self.process_queue;
-        self.modified.iter().map(|x| x.trigger()).for_each(|x| {
+        let processes = &mut self.cur_procs;
+        self.events.iter().map(|x| x.trigger()).for_each(|x| {
             processes.extend(
                 x.iter()
                     .filter(|x| processes.iter().all(|y| !std::ptr::eq(*x, y)))
                     .collect::<Vec<_>>(),
             )
         });
-        self.modified = Vec::new();
+        self.events.clear();
     }
 
-    pub fn push(&mut self, u: &'a dyn Notify<'a>) {
-        self.modified.push(u);
+    pub fn push(&mut self, u: &'a dyn Event<'a>) {
+        self.events.push(u);
     }
 
-    pub fn schedule_process(&mut self, p: &'a dyn Process<'a>, date: usize) {
-        if self.duration >= date {
-            self.queue_schedule[self.duration - date].push(p);
+    #[inline]
+    pub fn schedule_process(&mut self, p: &'a dyn Process<'a>, duration: usize) {
+        if duration == 0 {
+            self.next_delta_procs.push(p);
+        } else if duration + self.date + 1 <= self.duration {
+            self.schedule[self.duration - self.date - duration - 1].push(p);
         }
     }
 
-    /// Executes the processes in the process queue and empties it.
+    /// Appends the processes of the next delta into the cur_procs vector.
+    /// Executes the processes in the cur_procs vector and empties it.
     /// Returns false if the process queue is initially empty, true otherwise.
     fn execute(&mut self) -> bool {
-        if self.process_queue.is_empty() {
+        self.cur_procs.append(&mut self.next_delta_procs);
+        if self.cur_procs.is_empty() {
             false
         } else {
-            self.process_queue
+            self.cur_procs
                 .clone()
                 .iter()
                 .map(|x| (*x, x.execute(self)))
                 .collect::<Vec<_>>()
                 .iter()
                 .for_each(|x| match x.1 {
-                    Some(duration) => {
-                        if self.duration >= duration {
-                            self.queue_schedule[self.duration - duration].push(x.0)
-                        }
-                    }
+                    Some(duration) => self.schedule_process(x.0, duration),
                     None => (),
                 });
-            self.process_queue = Vec::new();
+            self.cur_procs.clear();
             true
         }
     }
 
-    // TODO: Prevent user to start two times the simulation
-    // TODO: write a new
-    pub fn start(&mut self, duration: usize, init: &[&'a dyn Process<'a>]) {
-        self.queue_schedule.resize_with(duration, Default::default);
-        self.duration = duration;
-        self.queue_schedule.push(init.to_vec());
-        //add the initial processes
-        for _ in 0..duration {
-            self.process_queue = match self.queue_schedule.pop() {
-                Some(queue) => queue,
-                None => Default::default(),
-            };
-            while self.execute() {
-                self.update();
-            }
-            self.duration = self.duration - 1;
+    pub fn new(duration: usize, init_processes: &[&'a dyn Process<'a>]) -> Self {
+        let mut schedule = vec![Default::default(); duration];
+        schedule[duration - 1] = init_processes.to_vec();
+        Self {
+            events: Vec::new(),
+            schedule: schedule,
+            cur_procs: Vec::new(),
+            next_delta_procs: Vec::new(),
+            duration: duration,
+            date: 0,
         }
+    }
+
+    /// Runs the simuation until the end
+    pub fn run(&mut self) {
+        for date in 0..self.duration {
+            self.date = date;
+            match self.schedule.pop() {
+                Some(procs) => {
+                    self.cur_procs = procs;
+                    while self.execute() {
+                        self.update();
+                    }
+                }
+                None => (),
+            };
+        }
+    }
+
+    pub fn get_date(&self) -> usize {
+        self.date
     }
 }

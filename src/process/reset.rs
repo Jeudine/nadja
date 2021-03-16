@@ -1,4 +1,4 @@
-use crate::interface::Notify;
+use crate::interface::Event;
 use crate::process::Process;
 use crate::simulator::Simulator;
 use crate::wire::Wire;
@@ -53,7 +53,7 @@ impl<'a> Process<'a> for Rst<'a> {
     }
 }
 
-impl<'a> Notify<'a> for Rst<'a> {
+impl<'a> Event<'a> for Rst<'a> {
     fn trigger(&self) -> &[&dyn Process<'a>] {
         &self.sensitivity[..]
     }

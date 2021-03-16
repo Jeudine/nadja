@@ -1,7 +1,7 @@
 use super::process::Process;
 use super::simulator::Simulator;
 use super::trace::Trace;
-use crate::interface::{Channel, Notify, Simulable};
+use crate::interface::{Channel, Event, Simulable};
 use std::cell::Cell;
 use std::fmt::{Display, Formatter, Result};
 
@@ -85,7 +85,7 @@ where
     }
 }
 
-impl<'a, T> Notify<'a> for WireTrig<'a, T>
+impl<'a, T> Event<'a> for WireTrig<'a, T>
 where
     T: Copy + PartialEq + Default + Display + Trace,
 {

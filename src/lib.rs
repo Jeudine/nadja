@@ -20,8 +20,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let mut sim: Simulator = Default::default();
-
         let rst_n: Wire<bool> = Default::default();
         let s1: Signal<bool> = Default::default();
         let s2: Signal<bool> = Default::default();
@@ -30,9 +28,10 @@ mod tests {
         let r1 = RegRst::new(&s1, &s2, &rst_n);
         let r2 = RegRst::new(&s3, &s2, &rst_n);
 
-        let clk = Clk::new(2, &[&r1, &r2], &[]);
+        let clk = Clk::new(0, &[&r1, &r2], &[]);
         let rst_n_proc = Rst::new(&rst_n, false, 2, 2, &[&r1, &r2]);
 
-        sim.start(20, &[&clk, &rst_n_proc]);
+        let mut sim = Simulator::new(16, &[&clk, &rst_n_proc]);
+        sim.run();
     }
 }

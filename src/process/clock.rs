@@ -1,4 +1,4 @@
-use crate::interface::Notify;
+use crate::interface::Event;
 use crate::process::Process;
 use crate::simulator::Simulator;
 use std::cell::Cell;
@@ -34,7 +34,7 @@ impl<'a> Process<'a> for Clk<'a> {
     }
 }
 
-impl<'a> Notify<'a> for Clk<'a> {
+impl<'a> Event<'a> for Clk<'a> {
     fn trigger(&self) -> &[&dyn Process<'a>] {
         if self.clk.get() {
             &self.posedge_sensitivity[..]

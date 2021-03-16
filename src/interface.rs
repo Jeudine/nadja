@@ -16,12 +16,12 @@ where
     }
 }
 
-pub trait Notify<'a> {
+pub trait Event<'a> {
     fn trigger(&self) -> &[&dyn Process<'a>];
 }
 
 pub trait Simulable<'a, T: Copy + PartialEq + Display + Default + Trace>:
-    Default + Channel<T> + Notify<'a>
+    Default + Channel<T> + Event<'a>
 {
     fn new(val: T, sensitivity: &[&'a dyn Process<'a>]) -> Self;
     fn write(&'a self, val: T, simulator: &mut Simulator<'a>) -> T;
