@@ -8,6 +8,9 @@ In Russian Nadja is the beginning of the word hope, but it's also the name of an
 * Add macros
 * Add a wait macro
 * Add a notion of time scale
+* Add modules
+* signal with no trigger list
+* Add I/O
 * Create a logic type
 * Generate trace files
 * Generate SystemVerilog code

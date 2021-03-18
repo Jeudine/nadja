@@ -1,5 +1,6 @@
 pub mod gate;
 pub mod interface;
+pub mod logic;
 pub mod process;
 pub mod signal;
 pub mod simulator;

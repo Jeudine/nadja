@@ -1,7 +1,7 @@
 use super::process::Process;
-use super::simulator::Simulator;
-use super::trace::Trace;
 use crate::interface::{Channel, Event, Simulable};
+use crate::simulator::Simulator;
+use crate::trace::Trace;
 use std::cell::Cell;
 use std::fmt::{Display, Formatter, Result};
 
