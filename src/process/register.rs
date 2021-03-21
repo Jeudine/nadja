@@ -1,28 +1,22 @@
 use crate::interface::Channel;
-use crate::interface::Simulable;
+use crate::interface::{Simulable, TValue};
 use crate::process::Process;
 use crate::signal::Signal;
 use crate::simulator::Simulator;
-use crate::trace::Trace;
-use std::fmt::Display;
 
-pub struct Reg<'a, T: Copy + PartialEq + Default + Display + Trace> {
+pub struct Reg<'a, T: TValue> {
     d: &'a dyn Channel<T>,
     q: &'a Signal<'a, T>,
 }
 
-impl<'a, T> Reg<'a, T>
-where
-    T: Copy + PartialEq + Default + Display + Trace,
+impl<'a, T: TValue> Reg<'a, T>
 {
     pub fn new(d: &'a dyn Channel<T>, q: &'a Signal<'a, T>) -> Self {
         Self { d: d, q: q }
     }
 }
 
-impl<'a, T> Process<'a> for Reg<'a, T>
-where
-    T: Copy + PartialEq + Default + Display + Trace,
+impl<'a, T: TValue> Process<'a> for Reg<'a, T>
 {
     fn execute(&self, simulator: &mut Simulator<'a>) -> Option<usize> {
         self.q.write(self.d.read(), simulator);
@@ -30,15 +24,13 @@ where
     }
 }
 
-pub struct RegRst<'a, T: Copy + PartialEq + Default + Display + Trace> {
+pub struct RegRst<'a, T: TValue> {
     d: &'a dyn Channel<T>,
     q: &'a Signal<'a, T>,
     rst: &'a dyn Channel<bool>,
 }
 
-impl<'a, T> RegRst<'a, T>
-where
-    T: Copy + PartialEq + Default + Display + Trace,
+impl<'a, T: TValue> RegRst<'a, T>
 {
     pub fn new(d: &'a dyn Channel<T>, q: &'a Signal<'a, T>, rst: &'a dyn Channel<bool>) -> Self {
         Self {
@@ -49,9 +41,7 @@ where
     }
 }
 
-impl<'a, T> Process<'a> for RegRst<'a, T>
-where
-    T: Copy + PartialEq + Default + Display + Trace,
+impl<'a, T: TValue> Process<'a> for RegRst<'a, T>
 {
     fn execute(&self, simulator: &mut Simulator<'a>) -> Option<usize> {
         if self.rst.read() {

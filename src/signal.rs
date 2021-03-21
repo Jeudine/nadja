@@ -1,28 +1,23 @@
 use super::process::Process;
-use crate::interface::{Channel, Event, Simulable};
+use crate::interface::{Channel, Event, TValue, Simulable};
 use crate::simulator::Simulator;
-use crate::trace::Trace;
 use std::cell::Cell;
 use std::fmt::{Display, Formatter, Result};
 
-pub struct Signal<'a, T: Copy + PartialEq + Default + Display + Trace> {
+pub struct Signal<'a, T: TValue> {
     cur_val: Cell<T>,
     new_val: Cell<T>,
     sensitivity: Vec<&'a dyn Process<'a>>,
 }
 
-impl<'a, T> Display for Signal<'a, T>
-where
-    T: Copy + PartialEq + Default + Display + Trace,
+impl<'a, T: TValue> Display for Signal<'a, T>
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         self.cur_val.get().fmt(f)
     }
 }
 
-impl<'a, T> Default for Signal<'a, T>
-where
-    T: Copy + PartialEq + Default + Display + Trace,
+impl<'a, T: TValue> Default for Signal<'a, T>
 {
     fn default() -> Self {
         Self {
@@ -33,9 +28,7 @@ where
     }
 }
 
-impl<'a, T> Event<'a> for Signal<'a, T>
-where
-    T: Copy + PartialEq + Default + Display + Trace,
+impl<'a, T: TValue> Event<'a> for Signal<'a, T>
 {
     fn trigger(&self) -> &[&dyn Process<'a>] {
         if self.cur_val.get() != self.new_val.get() {
@@ -47,18 +40,14 @@ where
     }
 }
 
-impl<'a, T> Channel<T> for Signal<'a, T>
-where
-    T: Copy + PartialEq + Default + Display + Trace,
+impl<'a, T: TValue> Channel<T> for Signal<'a, T>
 {
     fn read(&self) -> T {
         self.cur_val.get()
     }
 }
 
-impl<'a, T> Simulable<'a, T> for Signal<'a, T>
-where
-    T: Copy + PartialEq + Default + Display + Trace,
+impl<'a, T: TValue> Simulable<'a, T> for Signal<'a, T>
 {
     fn new(val: T, sensitivity: &[&'a dyn Process<'a>]) -> Self {
         Self {

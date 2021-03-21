@@ -22,7 +22,7 @@ impl Logic {
 
 impl Default for Logic {
     fn default() -> Self {
-        Logic::Logic0
+        Logic::Logicx
     }
 }
 
@@ -146,3 +146,8 @@ impl Display for Logic {
 }
 
 impl Trace for Logic {}
+
+impl<const WIDTH: usize> Trace for [Logic; WIDTH] {
+
+}
+
