@@ -1,7 +1,8 @@
 use crate::trace::Trace;
 use std::convert::From;
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{Debug, Formatter, Result};
 use std::ops::{BitAnd, BitOr, BitXor, Not};
+use crate::interface::{TChannel, TValue};
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum Logic {
@@ -67,7 +68,7 @@ impl From<Logic> for bool {
         match val {
             Logic::Logic0 => false,
             Logic::Logic1 => true,
-            _ => panic!("NADJA ERROR: can not convert {} into `bool`", val),
+            _ => panic!("NADJA ERROR: can not convert {:?} into `bool`", val),
         }
     }
 }
@@ -130,11 +131,11 @@ impl BitXor for Logic {
     }
 }
 
-impl Display for Logic {
+impl Debug for Logic {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         write!(
             f,
-            "{}",
+            "{:?}",
             match self {
                 Logic::Logic0 => '0',
                 Logic::Logic1 => '1',
@@ -146,8 +147,22 @@ impl Display for Logic {
 }
 
 impl Trace for Logic {}
+impl TChannel for Logic {}
+impl TValue for Logic {}
 
-impl<const WIDTH: usize> Trace for [Logic; WIDTH] {
-
+#[derive(Copy, Clone, PartialEq, Debug)]
+pub struct VLogic <const WIDTH: usize> {
+    val: [Logic; WIDTH],
 }
 
+impl<const WIDTH: usize> Trace for VLogic<WIDTH> {}
+impl<const WIDTH: usize> TChannel for VLogic<WIDTH> {}
+impl<const WIDTH: usize> TValue for VLogic<WIDTH> {}
+
+impl<const WIDTH: usize> Default for VLogic<WIDTH> {
+    fn default() -> Self {
+        Self {
+            val: [Logic::Logicx; WIDTH]
+        }
+    }
+}

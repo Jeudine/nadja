@@ -2,7 +2,7 @@ use super::process::Process;
 use crate::interface::{Channel, Event, TValue, Simulable};
 use crate::simulator::Simulator;
 use std::cell::Cell;
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{Debug, Formatter, Result};
 
 pub struct Signal<'a, T: TValue> {
     cur_val: Cell<T>,
@@ -10,7 +10,7 @@ pub struct Signal<'a, T: TValue> {
     sensitivity: Vec<&'a dyn Process<'a>>,
 }
 
-impl<'a, T: TValue> Display for Signal<'a, T>
+impl<'a, T: TValue> Debug for Signal<'a, T>
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         self.cur_val.get().fmt(f)

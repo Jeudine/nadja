@@ -8,6 +8,7 @@ pub mod signal;
 pub mod simulator;
 pub mod trace;
 pub mod wire;
+pub mod module;
 
 pub use crate::signal::Signal;
 
@@ -19,7 +20,7 @@ mod tests {
     use crate::signal::Signal;
     use crate::simulator::Simulator;
     use crate::wire::Wire;
-    use crate::logic::Logic;
+    use crate::logic::{Logic, VLogic};
 
     #[test]
     fn it_works() {
@@ -28,8 +29,9 @@ mod tests {
         let s2: Signal<Logic> = Default::default();
         let s3: Signal<Logic> = Default::default();
 
-        let x = [Logic::Logic0; 32];
-        let s: Signal<[Logic; 32]>;
+        let s4: Signal<VLogic<32>> = Default::default();
+        let s5: Signal<VLogic<32>> = Default::default();
+        println!{"{:?}", s4};
         let r1 = RegRst::new(&s1, &s2, &rst_n);
         let r2 = RegRst::new(&s3, &s2, &rst_n);
 
