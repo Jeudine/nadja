@@ -3,6 +3,7 @@ use std::convert::From;
 use std::fmt::{Debug, Formatter, Result};
 use std::ops::{BitAnd, BitOr, BitXor, Not};
 use crate::interface::{TChannel, TValue};
+use std::ops::Index;
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum Logic {
@@ -150,11 +151,20 @@ impl Trace for Logic {}
 impl TChannel for Logic {}
 impl TValue for Logic {}
 
-#[derive(Copy, Clone, PartialEq, Debug)]
+#[derive(Copy, Clone, PartialEq, Debug, new)]
 pub struct VLogic <const WIDTH: usize> {
     val: [Logic; WIDTH],
 }
 
+impl<const WIDTH: usize> VLogic<WIDTH> {
+    pub fn set(&mut self, val: [Logic; WIDTH]) {
+        self.val = val;
+    }
+
+    pub fn get(&mut self) -> [Logic; WIDTH] {
+        self.val
+    }
+}
 impl<const WIDTH: usize> Trace for VLogic<WIDTH> {}
 impl<const WIDTH: usize> TChannel for VLogic<WIDTH> {}
 impl<const WIDTH: usize> TValue for VLogic<WIDTH> {}
@@ -164,5 +174,12 @@ impl<const WIDTH: usize> Default for VLogic<WIDTH> {
         Self {
             val: [Logic::Logicx; WIDTH]
         }
+    }
+}
+
+impl<const WIDTH: usize> Index<usize> for VLogic<WIDTH> {
+    type Output = Logic;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.val[index]
     }
 }
