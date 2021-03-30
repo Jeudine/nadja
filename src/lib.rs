@@ -1,4 +1,6 @@
 #![feature(cell_update)]
+#[macro_use]
+extern crate derive_new;
 
 pub mod gate;
 pub mod interface;
