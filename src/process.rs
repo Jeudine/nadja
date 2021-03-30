@@ -1,5 +1,7 @@
 use super::simulator::Simulator;
 
+pub use  register::RegRst;
+
 pub mod clock;
 pub mod register;
 pub mod reset;
