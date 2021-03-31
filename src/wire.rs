@@ -8,8 +8,7 @@ pub struct Wire<T: TValue> {
     val: Cell<T>,
 }
 
-impl<T: TValue> Wire<T>
-{
+impl<T: TValue> Wire<T> {
     pub fn new(val: T) -> Self {
         Self {
             val: Cell::new(val),
@@ -26,15 +25,13 @@ impl<T: TValue> Wire<T>
     }
 }
 
-impl<T: TValue> Debug for Wire<T>
-{
+impl<T: TValue> Debug for Wire<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         self.val.get().fmt(f)
     }
 }
 
-impl<T: TValue> Default for Wire<T>
-{
+impl<T: TValue> Default for Wire<T> {
     fn default() -> Self {
         Self {
             val: Default::default(),
@@ -42,8 +39,7 @@ impl<T: TValue> Default for Wire<T>
     }
 }
 
-impl<T: TValue> Channel<T> for Wire<T>
-{
+impl<T: TValue> Channel<T> for Wire<T> {
     fn read(&self) -> T {
         self.val.get()
     }
@@ -54,15 +50,13 @@ pub struct WireTrig<'a, T: TValue> {
     sensitivity: Vec<&'a dyn Process<'a>>,
 }
 
-impl<'a, T: TValue> Debug for WireTrig<'a, T>
-{
+impl<'a, T: TValue> Debug for WireTrig<'a, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         self.val.get().fmt(f)
     }
 }
 
-impl<'a, T: TValue> Default for WireTrig<'a, T>
-{
+impl<'a, T: TValue> Default for WireTrig<'a, T> {
     fn default() -> Self {
         Self {
             val: Default::default(),
@@ -71,22 +65,19 @@ impl<'a, T: TValue> Default for WireTrig<'a, T>
     }
 }
 
-impl<'a, T: TValue> Event<'a> for WireTrig<'a, T>
-{
+impl<'a, T: TValue> Event<'a> for WireTrig<'a, T> {
     fn trigger(&self) -> &[&dyn Process<'a>] {
         &self.sensitivity[..]
     }
 }
 
-impl<'a, T: TValue> Channel<T> for WireTrig<'a, T>
-{
+impl<'a, T: TValue> Channel<T> for WireTrig<'a, T> {
     fn read(&self) -> T {
         self.val.get()
     }
 }
 
-impl<'a, T: TValue> Simulable<'a, T> for WireTrig<'a, T>
-{
+impl<'a, T: TValue> Simulable<'a, T> for WireTrig<'a, T> {
     fn new(val: T, sensitivity: &[&'a dyn Process<'a>]) -> Self {
         Self {
             val: Cell::new(val),

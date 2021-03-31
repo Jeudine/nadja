@@ -5,24 +5,24 @@ extern crate derive_new;
 pub mod gate;
 pub mod interface;
 pub mod logic;
+pub mod module;
 pub mod process;
 pub mod signal;
 pub mod simulator;
 pub mod trace;
 pub mod wire;
-pub mod module;
 
 pub use crate::signal::Signal;
 
 #[cfg(test)]
 mod tests {
+    use crate::logic::{Logic, VLogic};
     use crate::process::clock::Clk;
     use crate::process::register::{Reg, RegRst};
     use crate::process::reset::Rst;
     use crate::signal::Signal;
     use crate::simulator::Simulator;
     use crate::wire::Wire;
-    use crate::logic::{Logic, VLogic};
 
     #[test]
     fn it_works() {
@@ -33,7 +33,7 @@ mod tests {
 
         let s4: Signal<VLogic<32>> = Default::default();
         let s5: Signal<VLogic<32>> = Default::default();
-        println!{"{:?}", s4};
+        println! {"{:?}", s4};
         let r1 = RegRst::new(&s1, &s2, &rst_n);
         let r2 = RegRst::new(&s3, &s2, &rst_n);
 

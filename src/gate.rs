@@ -1,4 +1,4 @@
-use crate::interface::{TChannel ,Channel};
+use crate::interface::{Channel, TChannel};
 use std::fmt::Debug;
 use std::ops::Not as BitNot;
 use std::ops::{BitAnd, BitOr, BitXor};

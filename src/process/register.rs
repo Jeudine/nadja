@@ -10,8 +10,7 @@ pub struct Reg<'a, T: TValue> {
     q: &'a Signal<'a, T>,
 }
 
-impl<'a, T: TValue> Process<'a> for Reg<'a, T>
-{
+impl<'a, T: TValue> Process<'a> for Reg<'a, T> {
     fn execute(&self, simulator: &mut Simulator<'a>) -> Option<usize> {
         self.q.write(self.d.read(), simulator);
         None
@@ -26,8 +25,7 @@ pub struct RegRst<'a, T: TValue> {
     init_state: &'a dyn Channel<T>,
 }
 
-impl<'a, T: TValue> Process<'a> for RegRst<'a, T>
-{
+impl<'a, T: TValue> Process<'a> for RegRst<'a, T> {
     fn execute(&self, simulator: &mut Simulator<'a>) -> Option<usize> {
         if self.nrst.read() {
             self.q.write(self.d.read(), simulator);

@@ -1,9 +1,9 @@
+use crate::interface::{TChannel, TValue};
 use crate::trace::Trace;
 use std::convert::From;
 use std::fmt::{Debug, Formatter, Result};
-use std::ops::{BitAnd, BitOr, BitXor, Not};
-use crate::interface::{TChannel, TValue};
 use std::ops::Index;
+use std::ops::{BitAnd, BitOr, BitXor, Not};
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum Logic {
@@ -152,7 +152,7 @@ impl TChannel for Logic {}
 impl TValue for Logic {}
 
 #[derive(Copy, Clone, PartialEq, Debug, new)]
-pub struct VLogic <const WIDTH: usize> {
+pub struct VLogic<const WIDTH: usize> {
     val: [Logic; WIDTH],
 }
 
@@ -172,7 +172,7 @@ impl<const WIDTH: usize> TValue for VLogic<WIDTH> {}
 impl<const WIDTH: usize> Default for VLogic<WIDTH> {
     fn default() -> Self {
         Self {
-            val: [Logic::Logicx; WIDTH]
+            val: [Logic::Logicx; WIDTH],
         }
     }
 }
