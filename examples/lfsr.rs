@@ -5,6 +5,7 @@ use nadja::gate::Xor;
 use nadja::interface::Channel;
 use nadja::logic::Logic;
 use nadja::logic::VLogic;
+use nadja::logic::concat;
 use nadja::module::Module;
 use nadja::process::Process;
 use nadja::process::RegRst;
@@ -25,11 +26,7 @@ struct LFSR {
 
 impl Channel<VLogic<20>> for LFSR {
     fn read(&self) -> VLogic<20> {
-        let res = VLogic::new([self.state_o[19] ^ self.state_o[16]; 20]);
-        for i in 1..20 {
-            res[i] = self.state_o[i - 1];
-        }
-        res
+        concat(
     }
 }
 

@@ -1,4 +1,6 @@
 #![feature(cell_update)]
+#![feature(const_generics)]
+#![feature(const_evaluatable_checked)]
 #[macro_use]
 extern crate derive_new;
 

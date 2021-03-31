@@ -2,7 +2,7 @@ use crate::interface::{TChannel, TValue};
 use crate::trace::Trace;
 use std::convert::From;
 use std::fmt::{Debug, Formatter, Result};
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 use std::ops::{BitAnd, BitOr, BitXor, Not};
 
 #[derive(Copy, Clone, PartialEq)]
@@ -157,14 +157,19 @@ pub struct VLogic<const WIDTH: usize> {
 }
 
 impl<const WIDTH: usize> VLogic<WIDTH> {
-    pub fn set(&mut self, val: [Logic; WIDTH]) {
+    fn set(&mut self, val: [Logic; WIDTH]) {
         self.val = val;
     }
 
-    pub fn get(&mut self) -> [Logic; WIDTH] {
+    fn get(&self) -> [Logic; WIDTH] {
         self.val
     }
+
+    pub fn sub(&self, start: usize, end: usize) -> VLogic<{end - start}> {
+//TODO
+    }
 }
+
 impl<const WIDTH: usize> Trace for VLogic<WIDTH> {}
 impl<const WIDTH: usize> TChannel for VLogic<WIDTH> {}
 impl<const WIDTH: usize> TValue for VLogic<WIDTH> {}
@@ -182,4 +187,26 @@ impl<const WIDTH: usize> Index<usize> for VLogic<WIDTH> {
     fn index(&self, index: usize) -> &Self::Output {
         &self.val[index]
     }
+}
+
+impl<const WIDTH: usize> IndexMut<usize> for VLogic<WIDTH> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.val[index]
+    }
+}
+
+pub fn concat<const W1: usize, const W2: usize>(v1: VLogic<W1>, v2: VLogic<W2>) -> VLogic<{W1+W2}>{
+    let mut val = [Logic::Logicx; {W1+W2}];
+
+    let val1 = v1.get();
+    let val2 = v2.get();
+
+    for i in 0..W1 {
+        val[i] = val1[i];
+    }
+    for i in 0..W2 {
+        val[i+W1] = val2[i];
+    }
+
+    VLogic::new(val)
 }
