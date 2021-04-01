@@ -10,28 +10,40 @@ use nadja::module::Module;
 use nadja::process::Process;
 use nadja::process::RegRst;
 use nadja::simulator::Simulator;
+use nadja::signal::Signal;
+use nadja::wire::Wire;
+use nadja::process::clock::Clk;
+use nadja::process::reset::Rst;
 
-#[derive(Default)]
-struct LFSR {
-    //Input
-    pub init_state_i: VLogic<20>,
-    pub rst_ni: bool,
+#[macro_use]
+extern crate derive_new;
 
-    //Output
-    pub state_o: VLogic<20>,
-    //Comb
-
-    //Process
+#[derive(new)]
+struct LFSRComb<'a> {
+    state_o: &'a dyn Channel<VLogic<20>>,
 }
 
-impl Channel<VLogic<20>> for LFSR {
+impl<'a> Channel<VLogic<20>> for LFSRComb<'a> {
     fn read(&self) -> VLogic<20> {
-        concat(
+        let state_o = self.state_o.read();
+        //println!("output: {:?}", state_o);
+        //TODO for concat do a macro no matter if it's a logic or a VLogic
+        concat(VLogic::new([state_o[19] ^ state_o[16]]), state_o.sub::<0, 19>())
     }
 }
 
 fn main() {
-    let i_lfsr: LFSR = Default::default();
-    let comb: Xor<Logic>;
-    //let reg = RegRst::new(i_lfsr.);
+    let init_state_i: Wire<VLogic<20>> = Wire::new(concat(VLogic::new([Logic::Logic1; 1]), VLogic::new([Logic::Logic0;19])));
+    let state_o: Signal<VLogic<20>> = Default::default();
+    let rst_ni: Wire<bool> = Default::default();
+
+    let lfsr_comb = LFSRComb::new(&state_o);
+    let reg = RegRst::new(&lfsr_comb, &state_o, &rst_ni, &init_state_i);
+
+    let clk = Clk::new(1, &[&reg], &[]);
+    let rst_n_proc = Rst::new(&rst_ni, false, 2, 2, &[&reg]);
+
+    let mut sim = Simulator::new(2097155, &[&clk, &rst_n_proc]);
+    sim.run();
+    println!("{:?}", state_o);
 }

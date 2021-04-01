@@ -165,8 +165,11 @@ impl<const WIDTH: usize> VLogic<WIDTH> {
         self.val
     }
 
-    pub fn sub(&self, start: usize, end: usize) -> VLogic<{end - start}> {
-//TODO
+    //TODO: panic
+    pub fn sub<const START: usize, const END: usize>(&self) -> VLogic<{END - START}> {
+        let mut val = [Logic::Logicx; END - START];
+        val.copy_from_slice(&self.val[START..END]);
+        VLogic::new(val)
     }
 }
 
@@ -196,7 +199,7 @@ impl<const WIDTH: usize> IndexMut<usize> for VLogic<WIDTH> {
 }
 
 pub fn concat<const W1: usize, const W2: usize>(v1: VLogic<W1>, v2: VLogic<W2>) -> VLogic<{W1+W2}>{
-    let mut val = [Logic::Logicx; {W1+W2}];
+    let mut val = [Logic::Logicx; W1+W2];
 
     let val1 = v1.get();
     let val2 = v2.get();
