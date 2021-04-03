@@ -2,8 +2,8 @@ use crate::interface::{TChannel, TValue};
 use crate::trace::Trace;
 use std::convert::From;
 use std::fmt::{Debug, Formatter, Result};
-use std::ops::{Index, IndexMut};
 use std::ops::{BitAnd, BitOr, BitXor, Not};
+use std::ops::{Index, IndexMut};
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum Logic {
@@ -166,7 +166,7 @@ impl<const WIDTH: usize> VLogic<WIDTH> {
     }
 
     //TODO: panic
-    pub fn sub<const START: usize, const END: usize>(&self) -> VLogic<{END - START}> {
+    pub fn sub<const START: usize, const END: usize>(&self) -> VLogic<{ END - START }> {
         let mut val = [Logic::Logicx; END - START];
         val.copy_from_slice(&self.val[START..END]);
         VLogic::new(val)
@@ -198,8 +198,11 @@ impl<const WIDTH: usize> IndexMut<usize> for VLogic<WIDTH> {
     }
 }
 
-pub fn concat<const W1: usize, const W2: usize>(v1: VLogic<W1>, v2: VLogic<W2>) -> VLogic<{W1+W2}>{
-    let mut val = [Logic::Logicx; W1+W2];
+pub fn concat<const W1: usize, const W2: usize>(
+    v1: VLogic<W1>,
+    v2: VLogic<W2>,
+) -> VLogic<{ W1 + W2 }> {
+    let mut val = [Logic::Logicx; W1 + W2];
 
     let val1 = v1.get();
     let val2 = v2.get();
@@ -208,7 +211,7 @@ pub fn concat<const W1: usize, const W2: usize>(v1: VLogic<W1>, v2: VLogic<W2>) 
         val[i] = val1[i];
     }
     for i in 0..W2 {
-        val[i+W1] = val2[i];
+        val[i + W1] = val2[i];
     }
 
     VLogic::new(val)

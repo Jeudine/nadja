@@ -1,7 +1,5 @@
-use crate::interface::Event;
-use crate::process::Process;
-use crate::simulator::Simulator;
-use crate::wire::Wire;
+use crate::interface::{Event, Process};
+use crate::{Simulator, Wire};
 use std::cell::Cell;
 
 pub struct Rst<'a> {

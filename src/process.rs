@@ -1,15 +1,19 @@
-use super::simulator::Simulator;
-
-pub use register::RegRst;
-
 pub mod clock;
+pub use clock::Clk;
 pub mod register;
+pub use register::{Reg, RegRst};
 pub mod reset;
+pub use reset::Rst;
 
-/// Executes the process until the end or a break.
-/// In case the execution stops on a break, returns the duration of the break, otherwise return
-/// None.
-pub trait Process<'a> {
-    //TODO: hide this function to the user
-    fn execute(&'a self, simulator: &mut Simulator<'a>) -> Option<usize>;
+/*
+mod interface {
+    use crate::simulator::Simulator;
+
+    /// Executes the process until the end or a break.
+    /// In case the execution stops on a break, returns the duration of the break, otherwise return
+    /// None.
+    pub trait Process<'a> {
+        fn execute(&'a self, simulator: &mut Simulator<'a>) -> Option<usize>;
+    }
 }
+*/

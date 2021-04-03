@@ -5,16 +5,19 @@
 extern crate derive_new;
 
 pub mod gate;
-pub mod interface;
+mod interface;
+pub mod pub_interface;
+pub use crate::pub_interface::Channel;
 pub mod logic;
 pub mod module;
 pub mod process;
 pub mod signal;
+pub use crate::signal::Signal;
 pub mod simulator;
+pub use crate::simulator::Simulator;
 pub mod trace;
 pub mod wire;
-
-pub use crate::signal::Signal;
+pub use crate::wire::{Wire, WireTrig};
 
 #[cfg(test)]
 mod tests {

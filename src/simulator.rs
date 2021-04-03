@@ -1,5 +1,4 @@
-use crate::interface::Event;
-use crate::process::Process;
+use crate::interface::{Event, Process};
 
 pub struct Simulator<'a> {
     events: Vec<&'a dyn Event<'a>>,

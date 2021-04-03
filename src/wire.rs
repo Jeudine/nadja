@@ -1,6 +1,6 @@
-use super::process::Process;
-use super::simulator::Simulator;
-use crate::interface::{Channel, Event, Simulable, TValue};
+use crate::interface::{Event, Process, SimulableTrig, TValue};
+use crate::Channel;
+use crate::Simulator;
 use std::cell::Cell;
 use std::fmt::{Debug, Formatter, Result};
 
@@ -77,7 +77,7 @@ impl<'a, T: TValue> Channel<T> for WireTrig<'a, T> {
     }
 }
 
-impl<'a, T: TValue> Simulable<'a, T> for WireTrig<'a, T> {
+impl<'a, T: TValue> SimulableTrig<'a, T> for WireTrig<'a, T> {
     fn new(val: T, sensitivity: &[&'a dyn Process<'a>]) -> Self {
         Self {
             val: Cell::new(val),
