@@ -32,9 +32,14 @@ pub trait SimulableTrig<'a, T: TValue>: Default + Channel<T> + Event<'a> {
 impl TChannel for bool {}
 impl TValue for bool {}
 
-/// Executes the process until the end or a break.
-/// In case the execution stops on a break, returns the duration of the break, otherwise return
-/// None.
+/// Executes the process until the end, a break or a stop call.
+/// In case the execution breaks, returns the duration of the break.
 pub trait Process<'a> {
-    fn execute(&'a self, simulator: &mut Simulator<'a>) -> Option<usize>;
+    fn execute(&'a self, simulator: &mut Simulator<'a>) -> ProcessRes;
+}
+
+pub enum ProcessRes {
+    End,
+    Break(usize),
+    Stop,
 }

@@ -1,4 +1,4 @@
-use crate::interface::{Event, Process};
+use crate::interface::{Event, Process, ProcessRes};
 use crate::{Simulator, Wire};
 use std::cell::Cell;
 
@@ -28,24 +28,24 @@ impl<'a> Rst<'a> {
 }
 
 impl<'a> Process<'a> for Rst<'a> {
-    fn execute(&'a self, simulator: &mut Simulator<'a>) -> Option<usize> {
+    fn execute(&'a self, simulator: &mut Simulator<'a>) -> ProcessRes {
         let date = self.date.get();
         match date {
-            Some(_) => {
+            Some(x) => {
                 self.date.set(None);
-                date
+                ProcessRes::Break(x)
             }
             None => {
                 self.rst.update(&|x| !x);
                 let duration = self.duration.get();
                 match duration {
-                    Some(_) => {
+                    Some(x) => {
                         simulator.push(self);
                         self.duration.set(None);
+                        ProcessRes::Break(x)
                     }
-                    None => (),
+                    None => ProcessRes::End,
                 }
-                duration
             }
         }
     }

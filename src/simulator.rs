@@ -1,4 +1,4 @@
-use crate::interface::{Event, Process};
+use crate::interface::{Event, Process, ProcessRes};
 
 pub struct Simulator<'a> {
     events: Vec<&'a dyn Event<'a>>,
@@ -52,14 +52,15 @@ impl<'a> Simulator<'a> {
                 .collect::<Vec<_>>()
                 .iter()
                 .for_each(|x| match x.1 {
-                    Some(duration) => self.schedule_process(x.0, duration),
-                    None => (),
+                    ProcessRes::End => (),
+                    ProcessRes::Break(duration) => self.schedule_process(x.0, duration),
+                    ProcessRes::Stop => (), //TODO
                 });
             self.cur_procs.clear();
             true
         }
     }
-
+    /// Simulator constructor
     pub fn new(duration: usize, init_processes: &[&'a dyn Process<'a>]) -> Self {
         let mut schedule = vec![Default::default(); duration];
         schedule[duration - 1] = init_processes.to_vec();

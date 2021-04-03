@@ -5,12 +5,10 @@ In Russian Nadja is the beginning of the word hope, but it's also the name of an
 
 == TODO
 
-* Add macros
-* Add a wait macro
+* Add a stop function
 * Add a notion of time scale
-* Add modules
-* signal with no trigger list
+* Add a notion of modules
 * Add I/O
-* Create a logic type
 * Generate trace files
+* Add macros
 * Generate SystemVerilog code

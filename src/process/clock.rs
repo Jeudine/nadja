@@ -1,5 +1,5 @@
 use crate::interface::Event;
-use crate::interface::Process;
+use crate::interface::{Process, ProcessRes};
 use crate::simulator::Simulator;
 use std::cell::Cell;
 
@@ -26,11 +26,10 @@ impl<'a> Clk<'a> {
 }
 
 impl<'a> Process<'a> for Clk<'a> {
-    fn execute(&'a self, simulator: &mut Simulator<'a>) -> Option<usize> {
-        //println!("clk: {}", self.clk.get());
+    fn execute(&'a self, simulator: &mut Simulator<'a>) -> ProcessRes {
         self.clk.set(!self.clk.get());
         simulator.push(self);
-        Some(self.half_period)
+        ProcessRes::Break(self.half_period)
     }
 }
 
