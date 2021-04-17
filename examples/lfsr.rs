@@ -5,8 +5,8 @@ use nadja::logic::{concat, Logic, VLogic};
 use nadja::process::{Clk, RegRst, Rst};
 use nadja::{Channel, Signal, Simulator, Wire};
 
-#[macro_use]
-extern crate derive_new;
+#[macro_use] extern crate derive_new;
+#[macro_use] extern crate nadja_derive;
 
 #[derive(new)]
 struct LFSRComb<'a> {
@@ -21,6 +21,11 @@ impl<'a> Channel<VLogic<20>> for LFSRComb<'a> {
             state_o.sub::<0, 19>(),
         )
     }
+}
+
+#[channel]
+fn test(logic1_i: Logic, logic2_i: Logic) {
+    logic1_i & logic2_i
 }
 
 fn main() {
@@ -49,4 +54,5 @@ fn main() {
     let mut sim = Simulator::new(2097154, &[&clk, &rst_n_proc]);
     sim.run();
     println!("{:?}", state_o);
+    //println!("{:?}", state_o[19]);
 }

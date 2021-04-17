@@ -1,13 +1,19 @@
+//! An event-driven simulator designed specifically for digital circuits.
+
+#![warn(missing_docs)]
 #![feature(cell_update)]
 #![feature(const_generics)]
 #![feature(const_evaluatable_checked)]
-#[macro_use]
-extern crate derive_new;
+#[macro_use] extern crate derive_new;
+#[macro_use] extern crate nadja_derive;
 
+/// Basic combinational logic gates
 pub mod gate;
 mod interface;
+/// Public interface
 pub mod pub_interface;
 pub use crate::pub_interface::Channel;
+///
 pub mod logic;
 pub mod module;
 pub mod process;
