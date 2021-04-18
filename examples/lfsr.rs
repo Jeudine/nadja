@@ -24,7 +24,7 @@ impl<'a> Channel<VLogic<20>> for LFSRComb<'a> {
 }
 
 #[channel]
-fn test(logic1_i: Logic, logic2_i: Logic) {
+fn Test(logic1_i: Logic, logic2_i: Logic) -> Logic {
     logic1_i & logic2_i
 }
 
