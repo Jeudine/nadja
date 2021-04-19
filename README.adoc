@@ -28,16 +28,16 @@ Since the output of a combinational circuit is a pure function of the present in
 camel case
 
 [source, rust]
-```
+----
 #[channel]
 fn MyChannel(input1: type_i1, input2: type_i2) -> type_o {
     //Body of the channel
 }
-```
+----
 
 You can use the `new` constructor function preceded by the channel's name to return an instance of this channel. For each input, you have to provide a channel representing the actual input of your circuit.
 
 [source, rust]
-```
+----
 let output = new::Mychannel(input1, input2);
-```
+----
