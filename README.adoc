@@ -1,7 +1,6 @@
 = Nadja
 
-In Russian Nadja is the beginning of the word hope, but it's also the name of an event driven simulator written in Rust.
-
+An event-driven simulator specifically designed for digital circuits.
 
 == TODO
 
@@ -10,5 +9,35 @@ In Russian Nadja is the beginning of the word hope, but it's also the name of an
 * Add a notion of modules
 * Add I/O
 * Generate trace files
-* Add macros
+* macros for concat and modules
 * Generate SystemVerilog code
+
+== Usage
+
+Complete examples are available in the `examples/` directory:
+* LFSR
+
+=== Combinational logic
+
+* Describe Channel type
+
+In Nadja, the Combinational logic of a circuit is described using the functional semantic.
+
+Since the output of a combinational circuit is a pure function of the present inputs only, you can describe this kind of circuit by creating a function preceded by the attribute-like macro `#[channel]`. This kind of function is called a *Channel*. The output type of the function should be the same as the output of your combinational circuit.
+
+camel case
+
+[source, Rust]
+```
+#[channel]
+fn MyChannel(input1: type_i1, input2: type_i2) -> type_o {
+    //Body of the channel
+}
+```
+
+You can use the `new` constructor function preceded by the channel's name to return an instance of this channel. For each input, you have to provide a channel representing the actual input of your circuit.
+
+[source, Rust]
+```
+let output = new::Mychannel(input1, input2);
+```

@@ -4,13 +4,12 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn;
 use syn::Token;
-//TODO text for self
 
 #[proc_macro_attribute]
 pub fn channel(attr: TokenStream, item: TokenStream) -> TokenStream {
     //TODO panic if the item is not a function
-    let ast: syn::ItemFn = syn::parse(item).unwrap();
-    let sig = &ast.sig;
+    let func: syn::ItemFn = syn::parse(item).unwrap();
+    let sig = &func.sig;
     let channel_name = &sig.ident;
     let inputs_type = sig.inputs.iter().map(|x|
                                             match x {
@@ -29,10 +28,10 @@ pub fn channel(attr: TokenStream, item: TokenStream) -> TokenStream {
         syn::ReturnType::Type(_, p) => p,
         _ => panic!("Not supported on functions without return types!"),
     };
-
-    let body = &ast.block;
+    let body = &func.block;
 
     let gen = quote! {
+        #[derive(new)]
         struct #channel_name<'a> {
             #(#inputs_name: &'a dyn Channel<#inputs_type>,)*
         }
@@ -43,7 +42,6 @@ pub fn channel(attr: TokenStream, item: TokenStream) -> TokenStream {
                 #body
             }
         }
-
     };
     gen.into()
 }

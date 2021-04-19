@@ -1,11 +1,13 @@
-//! An event-driven simulator designed specifically for digital circuits.
+//! An event-driven simulator specifically designed for digital circuits.
 
 #![warn(missing_docs)]
 #![feature(cell_update)]
 #![feature(const_generics)]
 #![feature(const_evaluatable_checked)]
-#[macro_use] extern crate derive_new;
-#[macro_use] extern crate nadja_derive;
+#[macro_use]
+extern crate derive_new;
+#[macro_use]
+extern crate nadja_derive;
 
 /// Basic combinational logic gates
 pub mod gate;

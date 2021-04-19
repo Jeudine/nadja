@@ -6,7 +6,6 @@ pub trait Module {
     fn route() -> Self;
 }
 
-
 //TODO
 //
 //parameter

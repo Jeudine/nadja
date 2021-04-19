@@ -5,27 +5,17 @@ use nadja::logic::{concat, Logic, VLogic};
 use nadja::process::{Clk, RegRst, Rst};
 use nadja::{Channel, Signal, Simulator, Wire};
 
-#[macro_use] extern crate derive_new;
-#[macro_use] extern crate nadja_derive;
-
-#[derive(new)]
-struct LFSRComb<'a> {
-    state_o: &'a dyn Channel<VLogic<20>>,
-}
-
-impl<'a> Channel<VLogic<20>> for LFSRComb<'a> {
-    fn read(&self) -> VLogic<20> {
-        let state_o = self.state_o.read();
-        concat(
-            VLogic::new([state_o[19] ^ state_o[16]]),
-            state_o.sub::<0, 19>(),
-        )
-    }
-}
+#[macro_use]
+extern crate derive_new;
+#[macro_use]
+extern crate nadja_derive;
 
 #[channel]
-fn Test(logic1_i: Logic, logic2_i: Logic) -> Logic {
-    logic1_i & logic2_i
+fn LFSRComb(state_i: VLogic<20>) -> VLogic<20> {
+    concat(
+        VLogic::new([state_i[19] ^ state_i[16]]),
+        state_i.sub::<0, 19>(),
+    )
 }
 
 fn main() {
