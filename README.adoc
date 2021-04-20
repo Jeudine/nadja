@@ -20,7 +20,7 @@ Complete examples are available in the `examples/` directory:
 
 === Channels
 
-Each node of a circuit can be represented by a variable implementing the `Channel<T>` trait (with T, the actual type of the circuit node). For instance, the `Signal<T>` and the `Wire<T>` structures both implement the `Channel<T>` trait. This trait is hidden by the library and you usually don't have to think about it.
+Each node of a circuit can be represented by a variable implementing the `Channel<T>` trait (with `T`, the actual type of the circuit node). For instance, the `Signal<T>` and the `Wire<T>` structures both implement the `Channel<T>` trait. This trait is hidden by the library and you usually don't have to think about it.
 
 === Combinational logic
 
@@ -42,6 +42,6 @@ You can use the `new` constructor function preceded by the channel function's na
 
 [source, rust]
 ----
-let output = new::MyChannelFunc(&input1, &input2);
+let output = MyChannelFunc::new(&input1, &input2);
 //inpu1,input2 & output implement the Channel<T> trait
 ----
