@@ -32,6 +32,9 @@ pub trait SimulableTrig<'a, T: TValue>: Default + Channel<T> + Event<'a> {
 impl TChannel for bool {}
 impl TValue for bool {}
 
+impl TChannel for u32 {}
+impl TValue for u32 {}
+
 /// Executes the process until the end, a break or a stop call.
 /// In case the execution breaks, returns the duration of the break.
 pub trait Process<'a> {

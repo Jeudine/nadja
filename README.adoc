@@ -15,29 +15,33 @@ An event-driven simulator specifically designed for digital circuits.
 == Usage
 
 Complete examples are available in the `examples/` directory:
-* LFSR
+
+* Fibonacci LFSR
+
+=== Channels
+
+Each node of a circuit can be represented by a variable implementing the `Channel<T>` trait (with T, the actual type of the circuit node). For instance, the `Signal<T>` and the `Wire<T>` structures both implement the `Channel<T>` trait. This trait is hidden by the library and you usually don't have to think about it.
 
 === Combinational logic
 
-* Describe Channel type
-
 In Nadja, the Combinational logic of a circuit is described using the functional semantic.
 
-Since the output of a combinational circuit is a pure function of the present inputs only, you can describe this kind of circuit by creating a function preceded by the attribute-like macro `#[channel]`. This kind of function is called a *Channel*. The output type of the function should be the same as the output of your combinational circuit.
+Since the output of a combinational circuit is a pure function of the present inputs only, you can describe this kind of circuit by creating a function preceded by the attribute-like macro `#[channel]`. This kind of function is called a *Channel function*. The output type of the function should be the same as the output of your combinational circuit.
 
-camel case
+The name of channel functions should be written using the `UpperCamelCase`.
 
 [source, rust]
 ----
 #[channel]
-fn MyChannel(input1: type_i1, input2: type_i2) -> type_o {
+fn MyChannelFunc(input1: type_i1, input2: type_i2) -> type_o {
     //Body of the channel
 }
 ----
 
-You can use the `new` constructor function preceded by the channel's name to return an instance of this channel. For each input, you have to provide a channel representing the actual input of your circuit.
+You can use the `new` constructor function preceded by the channel function's name to instantiate the combinational circuit. This instance implements the `Channel<T>` trait. For each input, you have to provide a reference that implements the `Channel<T>` trait representing the actual input of your combinational circuit.
 
 [source, rust]
 ----
-let output = new::Mychannel(input1, input2);
+let output = new::MyChannelFunc(&input1, &input2);
+//inpu1,input2 & output implement the Channel<T> trait
 ----
