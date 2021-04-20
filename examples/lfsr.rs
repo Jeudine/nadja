@@ -11,19 +11,53 @@ extern crate derive_new;
 extern crate nadja_derive;
 
 #[channel]
-fn LFSRComb(state_i: VLogic<20>) -> VLogic<20> {
+fn CFunc(state_i: VLogic<20>) -> VLogic<20> {
     concat(
         VLogic::new([state_i[19] ^ state_i[16]]),
         state_i.sub::<0, 19>(),
     )
 }
+struct LFSRIntern {}
+
+struct LFSRComb<'a> {
+    //input
+
+    //output
+    pub state_o: &'a dyn Channel<VLogic<20>>,
+
+    //channel function
+    cFunc: CFunc<'a>,
+
+}
+
+impl<'a> LFSRComb<'a> {
+    pub fn new(intern: &'a LFSRIntern, state_o: &'a dyn Channel<VLogic<20>>) -> Self {
+        Self {
+            state_o: state_o,
+            cFunc: CFunc::new(state_o),
+        }
+    }
+}
+
+struct LFSRProc<'a> {
+    pub reg: RegRst<'a, VLogic<20>>,
+}
+
+impl<'a> LFSRProc<'a> {
+    pub fn new(intern: &'a LFSRIntern, comb: &'a LFSRComb, INIT_STATE: VLogic<20>, rst_ni: &'a Wire<bool>, state_o: &'a Signal<VLogic<20>>) -> Self {
+        Self {
+            reg: RegRst::new(&comb.cFunc, state_o, rst_ni, INIT_STATE),
+        }
+    }
+}
+
 
 fn main() {
     //parameter
-    let init_state = concat(
+    let INIT_STATE = concat(
         VLogic::new([Logic::Logic1; 1]),
         VLogic::new([Logic::Logic0; 19]),
-    );
+        );
 
     //input
     let rst_ni: Wire<bool> = Default::default();
@@ -31,15 +65,14 @@ fn main() {
     //output
     let state_o: Signal<VLogic<20>> = Default::default();
 
-    //comb
-    let lfsr_comb = LFSRComb::new(&state_o);
-
-    //process
-    let reg = RegRst::new(&lfsr_comb, &state_o, &rst_ni, init_state);
+    //module
+    let LFSR_iintern = LFSRIntern{};
+    let LFSR_icomb = LFSRComb::new(&LFSR_iintern, &state_o);
+    let LFSR_iproc = LFSRProc::new(&LFSR_iintern, &LFSR_icomb, INIT_STATE, &rst_ni, &state_o);
 
     // clk & rst
-    let clk = Clk::new(1, &[&reg], &[]);
-    let rst_n_proc = Rst::new(&rst_ni, false, 2, 2, &[&reg]);
+    let clk = Clk::new(1, &[&LFSR_iproc.reg], &[]);
+    let rst_n_proc = Rst::new(&rst_ni, false, 2, 2, &[&LFSR_iproc.reg]);
 
     let mut sim = Simulator::new(2097154, &[&clk, &rst_n_proc]);
     sim.run();
