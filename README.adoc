@@ -8,6 +8,9 @@ An event-driven simulator specifically designed for digital circuits.
 * Add a notion of time scale
 * Add a notion of modules
 * Add I/O
+* RAM block
+* FSM
+* Moore & Mealy machine
 * Generate trace files
 * macros for concat and modules
 * Generate SystemVerilog code
