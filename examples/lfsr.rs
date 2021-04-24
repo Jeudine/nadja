@@ -18,20 +18,30 @@ fn CFunc(state_i: VLogic<20>) -> VLogic<20> {
     )
 }
 
-/*
+#[module]
 struct LFSR {
+    //Parameter
     INIT_STATE: Param<VLogic<20>>,
+    //Input
+    rst_ni: Input<bool>,
+    //Output
     state_o: Output<VLogic<20>>,
+    //Channel function
     state_d: CFunc,
+    //Process
     reg: RegRst<VLogic<20>>,
+    //Internal signal
     state_q: Signal<VLogic<20>>,
 }
 
+/*
+#[module_co]
 {
     state_d: new(state_q),
     reg: new(state_d, state_q, rst_ni, INIT_STATE),
 }
 */
+
 #[derive(Default)]
 struct LFSRSig {
     pub state_q: Signal<VLogic<20>>,
