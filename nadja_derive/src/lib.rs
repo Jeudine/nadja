@@ -67,7 +67,6 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
                             m.outputs_type.push(x.ty.clone());
                             m.outputs_name.push(x.ident.as_ref().unwrap().clone());
                         },
-                        "Signal" => m.int_signs.push(x.clone()),
                         "RegRst" | "Reg" => {
                             m.procs_type.push(
                                 match &ps.arguments {
@@ -101,7 +100,7 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
     let gen = quote! {
         #[derive(Default)]
         struct #sig_name {
-            #(pub #int_signs,)*
+            #(pub #procs_name: Signal<#procs_type>,)*
         }
 
         struct #comb_name<'a> {

@@ -10,28 +10,28 @@ extern crate derive_new;
 #[macro_use]
 extern crate nadja_derive;
 
+const WIDTH: usize = 20;
+
 #[channel]
-fn CFunc(state_i: VLogic<20>) -> VLogic<20> {
+fn CFunc(state_i: VLogic<WIDTH>) -> VLogic<WIDTH> {
     concat(
-        VLogic::new([state_i[19] ^ state_i[16]]),
-        state_i.sub::<0, 19>(),
+        VLogic::new([state_i[WIDTH - 1] ^ state_i[16]]),
+        state_i.sub::<0, { WIDTH - 1 }>(),
     )
 }
 
 #[module]
 struct LFSR {
     //Parameter
-    INIT_STATE: Param<VLogic<20>>,
+    INIT_STATE: Param<VLogic<WIDTH>>,
     //Input
     rst_ni: Input<bool>,
     //Output
-    state_o: Output<VLogic<20>>,
+    state_o: Output<VLogic<WIDTH>>,
     //Channel function
     state_d: CFunc,
     //Process
-    reg: RegRst<VLogic<20>>,
-    //Internal signal
-    state_q: Signal<VLogic<20>>,
+    state_q: RegRst<VLogic<WIDTH>>,
 }
 
 impl<'a> LFSRComb<'a> {
@@ -47,7 +47,7 @@ impl<'a> LFSRComb<'a> {
 impl<'a> LFSRProc<'a> {
     pub fn new(sig: &'a LFSRSig, comb: &'a LFSRComb, INIT_STATE: VLogic<20>) -> Self {
         Self {
-            reg: RegRst::new(&comb.state_d, &sig.state_q, comb.rst_ni, INIT_STATE),
+            state_q: RegRst::new(&comb.state_d, &sig.state_q, comb.rst_ni, INIT_STATE),
         }
     }
 }
@@ -56,7 +56,7 @@ fn main() {
     //parameter
     let INIT_STATE = concat(
         VLogic::new([Logic::Logic1; 1]),
-        VLogic::new([Logic::Logic0; 19]),
+        VLogic::new([Logic::Logic0; WIDTH - 1]),
     );
 
     //input
@@ -71,8 +71,8 @@ fn main() {
     let state_o = LFSR_i_comb.state_o;
 
     // clk & rst
-    let clk = Clk::new(1, &[&LFSR_i_proc.reg], &[]);
-    let rst_n_proc = Rst::new(&rst_ni, false, 2, 2, &[&LFSR_i_proc.reg]);
+    let clk = Clk::new(1, &[&LFSR_i_proc.state_q], &[]);
+    let rst_n_proc = Rst::new(&rst_ni, false, 2, 2, &[&LFSR_i_proc.state_q]);
 
     let mut sim = Simulator::new(2097154, &[&clk, &rst_n_proc]);
     sim.run();

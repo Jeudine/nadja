@@ -14,7 +14,7 @@ pub mod gate;
 mod interface;
 /// Public interface
 pub mod pub_interface;
-pub use crate::pub_interface::{Channel, Input, Output, InOut};
+pub use crate::pub_interface::{Channel, InOut, Input, Output};
 pub mod logic;
 pub mod module;
 pub mod process;

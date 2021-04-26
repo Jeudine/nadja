@@ -6,8 +6,6 @@ An event-driven simulator specifically designed for digital circuits.
 
 * Add a stop function
 * Add a notion of time scale
-* Add a notion of modules
-* Add I/O
 * RAM block
 * FSM
 * Moore & Mealy machine
