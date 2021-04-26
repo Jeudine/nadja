@@ -34,30 +34,6 @@ struct LFSR {
     state_q: Signal<VLogic<20>>,
 }
 
-/*
-#[module_co]
-{
-    state_d: new(state_q),
-    reg: new(state_d, state_q, rst_ni, INIT_STATE),
-}
-*/
-/*
-#[derive(Default)]
-struct LFSRSig {
-    pub state_q: Signal<VLogic<20>>,
-}
-struct LFSRComb<'a> {
-    //input
-    rst_ni: &'a Input<bool>,
-
-    //output
-    pub state_o: &'a Output<VLogic<20>>,
-
-    //channel function
-    state_d: CFunc<'a>,
-}
-*/
-
 impl<'a> LFSRComb<'a> {
     pub fn new(sig: &'a LFSRSig, rst_ni: &'a Input<bool>) -> Self {
         Self {
@@ -68,9 +44,6 @@ impl<'a> LFSRComb<'a> {
     }
 }
 
-struct LFSRProc<'a> {
-    reg: RegRst<'a, VLogic<20>>,
-}
 impl<'a> LFSRProc<'a> {
     pub fn new(sig: &'a LFSRSig, comb: &'a LFSRComb, INIT_STATE: VLogic<20>) -> Self {
         Self {
