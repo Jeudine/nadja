@@ -1,6 +1,6 @@
 //! An event-driven simulator specifically designed for digital circuits.
 
-#![warn(missing_docs)]
+//#![warn(missing_docs)]
 #![feature(cell_update)]
 #![feature(const_generics)]
 #![feature(const_evaluatable_checked)]
@@ -14,8 +14,7 @@ pub mod gate;
 mod interface;
 /// Public interface
 pub mod pub_interface;
-pub use crate::pub_interface::Channel;
-///
+pub use crate::pub_interface::{Channel, Input, Output, InOut};
 pub mod logic;
 pub mod module;
 pub mod process;

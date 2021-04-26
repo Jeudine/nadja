@@ -3,7 +3,7 @@
 //TODO simplify the use
 use nadja::logic::{concat, Logic, VLogic};
 use nadja::process::{Clk, RegRst, Rst};
-use nadja::{Channel, Signal, Simulator, Wire};
+use nadja::{Channel, Input, Output, Signal, Simulator, Wire};
 
 #[macro_use]
 extern crate derive_new;
@@ -17,8 +17,6 @@ fn CFunc(state_i: VLogic<20>) -> VLogic<20> {
         state_i.sub::<0, 19>(),
     )
 }
-type Input<T> = dyn Channel<T>;
-type Output<T> = dyn Channel<T>;
 
 #[module]
 struct LFSR {
