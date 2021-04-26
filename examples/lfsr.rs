@@ -17,6 +17,8 @@ fn CFunc(state_i: VLogic<20>) -> VLogic<20> {
         state_i.sub::<0, 19>(),
     )
 }
+type Input<T> = dyn Channel<T>;
+type Output<T> = dyn Channel<T>;
 
 #[module]
 struct LFSR {
@@ -41,25 +43,25 @@ struct LFSR {
     reg: new(state_d, state_q, rst_ni, INIT_STATE),
 }
 */
-
+/*
 #[derive(Default)]
 struct LFSRSig {
     pub state_q: Signal<VLogic<20>>,
 }
-
 struct LFSRComb<'a> {
     //input
-    rst_ni: &'a dyn Channel<bool>,
+    rst_ni: &'a Input<bool>,
 
     //output
-    pub state_o: &'a dyn Channel<VLogic<20>>,
+    pub state_o: &'a Output<VLogic<20>>,
 
     //channel function
     state_d: CFunc<'a>,
 }
+*/
 
 impl<'a> LFSRComb<'a> {
-    pub fn new(sig: &'a LFSRSig, rst_ni: &'a dyn Channel<bool>) -> Self {
+    pub fn new(sig: &'a LFSRSig, rst_ni: &'a Input<bool>) -> Self {
         Self {
             rst_ni: rst_ni,
             state_o: &sig.state_q,
@@ -71,7 +73,6 @@ impl<'a> LFSRComb<'a> {
 struct LFSRProc<'a> {
     reg: RegRst<'a, VLogic<20>>,
 }
-
 impl<'a> LFSRProc<'a> {
     pub fn new(sig: &'a LFSRSig, comb: &'a LFSRComb, INIT_STATE: VLogic<20>) -> Self {
         Self {

@@ -37,7 +37,7 @@ The name of channel functions should be written using the `UpperCamelCase`.
 ----
 #[channel]
 fn MyChannelFunc(input1: type_i1, input2: type_i2) -> type_o {
-    //Body of the channel
+    //Body of the channel function
 }
 ----
 

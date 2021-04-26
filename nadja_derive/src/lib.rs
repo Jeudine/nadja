@@ -57,35 +57,65 @@ pub fn module(attr: TokenStream, item: TokenStream) -> TokenStream {
     let proc_name = quote::format_ident!("{}Proc", module_name);
 
     let attrs: moduleParse = match(struc.fields) {
-        syn::Fields::Named(p) => p.named.iter().fold(moduleParse::new(), |m, x| match(x.ty.clone()) {
-            syn::Type::Path(p) => {p.path.segments;m}
-            _ => panic!("Error while parsing module, wrong type!"),
+        syn::Fields::Named(p) => p.named.iter().fold(moduleParse::new(), |mut m, x| {
+            let mut x = x.clone();
+            match(x.ty) {
+                syn::Type::Path(ref p) => {
+                    match p.path.segments.first().unwrap().ident.to_string().as_str() {
+                        "Param" => {
+                            m.parameters.push(x)},
+                        "Input" => {
+                            m.inputs.push(x)},
+                        "Output" => m.outputs.push(x),
+                        "Signal" => m.int_signs.push(x),
+                        "RegRst" | "Reg" => m.procs.push(x),
+                        _ => m.channel_fns.push(x),
+                    };
+                    m
+                }
+                _ => panic!("Error while parsing module, wrong type!"),
+            }
         }
         ),
         _ => panic!("Error while parsing module!"),
     };
 
+    let inputs_type = &attrs.inputs.iter().map(|x| x.ty.clone()).collect::<Vec<_>>();
+    let inputs_name = &attrs.inputs.iter().map(|x| x.ident.as_ref().unwrap().clone()).collect::<Vec<_>>();
+
+    let outputs_type = &attrs.outputs.iter().map(|x| x.ty.clone()).collect::<Vec<_>>();
+    let outputs_name = &attrs.outputs.iter().map(|x| x.ident.as_ref().unwrap().clone()).collect::<Vec<_>>();
+
+    let channel_fns = &attrs.channel_fns;
+
+    let int_signs = &attrs.int_signs;
+
     let gen = quote! {
         #[derive(Default)]
         struct #sig_name {
+            #(pub #int_signs,)*
         }
 
-        struct #comb_name {
+        struct #comb_name<'a> {
+            #(#inputs_name: &'a #inputs_type,)*
+            #(pub #outputs_name: &'a #outputs_type,)*
+            #(#channel_fns<'a>,)*
         }
-
+/*
         struct #proc_name {
         }
+        */
     };
     gen.into()
 }
 
 struct moduleParse {
-    parameters: Vec<syn::Field>,
-    inputs: Vec<syn::Field>,
-    outputs: Vec<syn::Field>,
-    channel_fns: Vec<syn::Field>,
-    procs: Vec<syn::Field>,
-    int_signs: Vec<syn::Field>
+    pub parameters: Vec<syn::Field>,
+    pub inputs: Vec<syn::Field>,
+    pub outputs: Vec<syn::Field>,
+    pub channel_fns: Vec<syn::Field>,
+    pub procs: Vec<syn::Field>,
+    pub int_signs: Vec<syn::Field>
 }
 
 impl moduleParse {
