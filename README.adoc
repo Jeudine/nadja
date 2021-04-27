@@ -1,4 +1,4 @@
-= Nadja
+= Nadja (WIP)
 
 An event-driven simulator specifically designed for digital circuits.
 
@@ -10,7 +10,7 @@ An event-driven simulator specifically designed for digital circuits.
 * FSM
 * Moore & Mealy machine
 * Generate trace files
-* macros for concat and modules
+* macros for concat
 * Generate SystemVerilog code
 
 == Usage

@@ -34,21 +34,18 @@ struct LFSR {
     state_q: RegRst<VLogic<WIDTH>>,
 }
 
-impl<'a> LFSRComb<'a> {
-    pub fn new(sig: &'a LFSRSig, rst_ni: &'a Input<bool>) -> Self {
-        Self {
-            rst_ni: rst_ni,
-            state_o: &sig.state_q,
-            state_d: CFunc::new(&sig.state_q),
-        }
+#[comb]
+fn LFSR() {
+    Self {
+        state_o: &sig.state_q,
+        state_d: CFunc::new(&sig.state_q),
     }
 }
 
-impl<'a> LFSRProc<'a> {
-    pub fn new(sig: &'a LFSRSig, comb: &'a LFSRComb, INIT_STATE: VLogic<20>) -> Self {
-        Self {
-            state_q: RegRst::new(&comb.state_d, &sig.state_q, comb.rst_ni, INIT_STATE),
-        }
+#[proc]
+fn LFSR() {
+    Self {
+        state_q: RegRst::new(&comb.state_d, &sig.state_q, input.rst_ni, input.INIT_STATE),
     }
 }
 
@@ -63,9 +60,14 @@ fn main() {
     let rst_ni: Wire<bool> = Default::default();
 
     //module
+    //TODO macro
     let LFSR_i_sig = LFSRSig::default();
-    let LFSR_i_comb = LFSRComb::new(&LFSR_i_sig, &rst_ni);
-    let LFSR_i_proc = LFSRProc::new(&LFSR_i_sig, &LFSR_i_comb, INIT_STATE);
+    let LFSR_i_i = LFSRInput {
+        INIT_STATE: INIT_STATE,
+        rst_ni: &rst_ni,
+    };
+    let LFSR_i_comb = LFSRComb::new(&LFSR_i_sig, &LFSR_i_i);
+    let LFSR_i_proc = LFSRProc::new(&LFSR_i_sig, &LFSR_i_i, &LFSR_i_comb);
 
     //output
     let state_o = LFSR_i_comb.state_o;
@@ -77,5 +79,4 @@ fn main() {
     let mut sim = Simulator::new(2097154, &[&clk, &rst_n_proc]);
     sim.run();
     println!("{:?}", state_o.read());
-    //println!("{:?}", state_o[19]);
 }
