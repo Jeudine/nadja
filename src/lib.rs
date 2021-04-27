@@ -8,6 +8,8 @@
 extern crate derive_new;
 #[macro_use]
 extern crate nadja_derive;
+#[macro_use]
+extern crate mashup;
 
 /// Basic combinational logic gates
 pub mod gate;

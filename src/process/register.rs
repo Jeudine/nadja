@@ -21,7 +21,7 @@ pub struct RegRst<'a, T: TValue> {
     d: &'a dyn Channel<T>,
     q: &'a Signal<T>,
     nrst: &'a dyn Channel<bool>,
-    init_state: T,
+    init_state: &'a T,
 }
 
 impl<'a, T: TValue> Process<'a> for RegRst<'a, T> {
@@ -29,7 +29,7 @@ impl<'a, T: TValue> Process<'a> for RegRst<'a, T> {
         if self.nrst.read() {
             self.q.write(self.d.read(), simulator);
         } else {
-            self.q.write(self.init_state, simulator);
+            self.q.write(*self.init_state, simulator);
         }
         ProcessRes::End
     }

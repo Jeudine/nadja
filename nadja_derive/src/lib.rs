@@ -1,5 +1,4 @@
 extern crate proc_macro;
-
 use proc_macro::TokenStream;
 use quote::quote;
 use syn;
@@ -125,6 +124,43 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
         struct #proc_name<'a> {
             #(#procs_name: #procs_struc<'a, #procs_type>,)*
         }
+
+        struct #module_name<'a> {
+            pub c:  &'a #comb_name<'a>,
+            pub p:  &'a #proc_name<'a>,
+        }
+
+        #[macro_export]
+        macro_rules! #module_name {
+            (
+                $i:ident {
+                    $(
+                        $fn:ident: $expr:expr
+                     ),* $(,)*
+                }
+            ) => {
+                mashup! {
+                    m["sig" $i] = sig_ $i;
+                    m["input" $i] = input_ $i;
+                    m["comb" $i] = comb_ $i;
+                    m["proc" $i] = proc_ $i;
+                }
+                m! {
+                    let "sig" $i = #sig_name::default();
+                    let "input" $i = #i_name {
+                        $(
+                            $fn: $expr,
+                            )*
+                    };
+                    let "comb" $i = #comb_name::new(& "sig" $i, & "input" $i);
+                    let "proc" $i = #proc_name::new(& "sig" $i, & "input" $i, & "comb" $i);
+                    let $i = #module_name {
+                        c: & "comb" $i,
+                        p: & "proc" $i,
+                    };
+                }
+            }
+        }
     };
     gen.into()
 }
@@ -140,7 +176,7 @@ pub fn comb(_: TokenStream, item: TokenStream) -> TokenStream {
     let gen = quote! {
         impl <'a> #comb_name<'a> {
             pub fn new(sig: &'a #sig_name, input: &'a #i_name) -> Self {
-                    #body
+                #body
             }
         }
     };
@@ -159,10 +195,17 @@ pub fn proc(_: TokenStream, item: TokenStream) -> TokenStream {
     let gen = quote! {
         impl <'a> #proc_name<'a> {
             pub fn new(sig: &'a #sig_name, input: &'a #i_name, comb: &'a #comb_name) -> Self {
-                    #body
+                #body
             }
         }
     };
+    gen.into()
+}
+
+#[proc_macro_attribute]
+pub fn instance(_: TokenStream, item: TokenStream) -> TokenStream {
+    //let instence = syn::parse_macro_input!(item as  syn::ExprLet);
+    let gen = quote! {};
     gen.into()
 }
 

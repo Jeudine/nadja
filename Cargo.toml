@@ -9,4 +9,5 @@ readme = "README.adoc"
 
 [dependencies]
 derive-new = "0.5"
+mashup = "0.1"
 nadja_derive = { path = "nadja_derive" }

@@ -4,11 +4,13 @@
 use nadja::logic::{concat, Logic, VLogic};
 use nadja::process::{Clk, RegRst, Rst};
 use nadja::{Channel, Input, Output, Signal, Simulator, Wire};
-
+//TODO simplify macro
 #[macro_use]
 extern crate derive_new;
 #[macro_use]
 extern crate nadja_derive;
+#[macro_use]
+extern crate mashup;
 
 const WIDTH: usize = 20;
 
@@ -45,7 +47,7 @@ fn LFSR() {
 #[proc]
 fn LFSR() {
     Self {
-        state_q: RegRst::new(&comb.state_d, &sig.state_q, input.rst_ni, input.INIT_STATE),
+        state_q: RegRst::new(&comb.state_d, &sig.state_q, input.rst_ni, &input.INIT_STATE),
     }
 }
 
@@ -59,24 +61,20 @@ fn main() {
     //input
     let rst_ni: Wire<bool> = Default::default();
 
-    //module
-    //TODO macro
-    let LFSR_i_sig = LFSRSig::default();
-    let LFSR_i_i = LFSRInput {
+    //instance
+    LFSR!(i_LFSR {
         INIT_STATE: INIT_STATE,
         rst_ni: &rst_ni,
-    };
-    let LFSR_i_comb = LFSRComb::new(&LFSR_i_sig, &LFSR_i_i);
-    let LFSR_i_proc = LFSRProc::new(&LFSR_i_sig, &LFSR_i_i, &LFSR_i_comb);
+    });
 
     //output
-    let state_o = LFSR_i_comb.state_o;
+    let state_o = i_LFSR.c.state_o;
 
     // clk & rst
-    let clk = Clk::new(1, &[&LFSR_i_proc.state_q], &[]);
-    let rst_n_proc = Rst::new(&rst_ni, false, 2, 2, &[&LFSR_i_proc.state_q]);
+    let clk = Clk::new(1, &[&i_LFSR.p.state_q], &[]);
+    let rst_n_proc = Rst::new(&rst_ni, false, 2, 2, &[&i_LFSR.p.state_q]);
 
     let mut sim = Simulator::new(2097154, &[&clk, &rst_n_proc]);
     sim.run();
-    println!("{:?}", state_o.read());
+    println!("{:?}", state_o);
 }
