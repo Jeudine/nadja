@@ -36,10 +36,16 @@ struct LFSR {
     state_q: RegRst<VLogic<WIDTH>>,
 }
 
-#[comb]
+#[out]
 fn LFSR() {
     Self {
         state_o: &sig.state_q,
+    }
+}
+
+#[comb]
+fn LFSR() {
+    Self {
         state_d: CFunc::new(&sig.state_q),
     }
 }
@@ -47,6 +53,7 @@ fn LFSR() {
 #[proc]
 fn LFSR() {
     Self {
+        //TODO: sig.state_q induced
         state_q: RegRst::new(&comb.state_d, &sig.state_q, input.rst_ni, &input.INIT_STATE),
     }
 }
@@ -67,14 +74,14 @@ fn main() {
         rst_ni: &rst_ni,
     });
 
-    //output
-    let state_o = i_LFSR.c.state_o;
-
     // clk & rst
     let clk = Clk::new(1, &[&i_LFSR.p.state_q], &[]);
     let rst_n_proc = Rst::new(&rst_ni, false, 2, 2, &[&i_LFSR.p.state_q]);
 
+    //simulation
     let mut sim = Simulator::new(2097154, &[&clk, &rst_n_proc]);
     sim.run();
-    println!("{:?}", state_o);
+
+    //output
+    println!("{:?}", i_LFSR.o.state_o);
 }

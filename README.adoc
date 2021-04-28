@@ -14,7 +14,7 @@ An event-driven simulator specifically designed for digital circuits.
 * macros for concat
 * Generate SystemVerilog code
 
-== Usage
+== Usage (WIP)
 
 Complete examples are available in the `examples/` directory:
 
@@ -46,4 +46,64 @@ You can use the `new` constructor function preceded by the channel function's na
 ----
 let output = MyChannelFunc::new(&input1, &input2);
 //inpu1,input2 & output implement the Channel<T> trait
+----
+
+=== Modules
+
+*Example:*
+
+[source, rust]
+----
+#[module]
+struct MyModule {
+    //Parameters
+    P1: Param<type_1>,
+
+    //Input
+    a_i: Input<type_i1>,
+    rst_ni: Input<bool>,
+
+    //Output
+    x_o: Output<type_o1>,
+    y_o: Output<type_o1>,
+
+    //Channel function
+    x_d: CFunc1,
+    y: CFunc2,
+
+    //Process
+    x_q: RegRst<type_1>,
+}
+----
+
+[source, rust]
+----
+#[comb]
+fn MyModule() {
+    Self {
+        x_d: CFunc1::new(&sig.x_q),
+        y: CFunc2::new(input.a_i),
+    }
+}
+----
+
+[source, rust]
+----
+#[proc]
+fn MyModule() {
+    Self {
+        x_q: RegRst::new(&comb.x_d, &sig.x_q, input.rst_ni, &input.P1),
+    }
+}
+----
+
+[source, rust]
+----
+#[out]
+fn MyModule() {
+    Self {
+        x_o: &sig.x_q,
+        y_o: &comb.y,
+    }
+}
 ----
