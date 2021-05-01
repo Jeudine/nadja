@@ -38,24 +38,17 @@ struct LFSR {
 
 #[out]
 fn LFSR() {
-    Self {
-        state_o: &sig.state_q,
-    }
+    state_o = sig.state_q;
 }
 
 #[comb]
 fn LFSR() {
-    Self {
-        state_d: CFunc::new(&sig.state_q),
-    }
+    state_d = CFunc(&sig.state_q);
 }
 
 #[proc]
 fn LFSR() {
-    Self {
-        //TODO: sig.state_q induced
-        state_q: RegRst::new(&comb.state_d, &sig.state_q, input.rst_ni, &input.INIT_STATE),
-    }
+    state_q = RegRst(&comb.state_d, &sig.state_q, input.rst_ni, &input.INIT_STATE);
 }
 
 fn main() {

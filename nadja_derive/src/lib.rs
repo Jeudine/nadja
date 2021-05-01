@@ -52,9 +52,10 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
     let i_name = quote::format_ident!("{}Input", module_name);
     let o_name = quote::format_ident!("{}Output", module_name);
     let proc_name = quote::format_ident!("{}Proc", module_name);
+    let m_name = quote::format_ident!("{}m", module_name);
 
     let attrs: ModuleParse = match struc.fields {
-        syn::Fields::Named(p) => p.named.iter().fold(ModuleParse::new(), |mut m, x| {
+        syn::Fields::Named(p) => p.named.iter().fold(ModuleParse::default(), |mut m, x| {
             match x.ty {
                 syn::Type::Path(ref p) => {
                     let ps = p.path.segments.first().unwrap();
@@ -144,11 +145,11 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
                 }
             ) => {
                 mashup! {
-                    m["sig" $i] = sig_ $i;
-                    m["input" $i] = input_ $i;
-                    m["comb" $i] = comb_ $i;
+                    #m_name["sig" $i] = sig_ $i;
+                    #m_name["input" $i] = input_ $i;
+                    #m_name["comb" $i] = comb_ $i;
                 }
-                m! {
+                #m_name! {
                     let "sig" $i = #sig_name::default();
                     let "input" $i = #i_name {
                         $(
@@ -175,11 +176,15 @@ pub fn out(_: TokenStream, item: TokenStream) -> TokenStream {
     let sig_name = quote::format_ident!("{}Sig", ident);
     let i_name = quote::format_ident!("{}Input", ident);
     let o_name = quote::format_ident!("{}Output", ident);
-    let body = &func.block;
+    let p = OutParse::parse(&func.block.stmts);
+    let left = p.left;
+    let right = p.right;
     let gen = quote! {
         impl <'a> #o_name<'a> {
             pub fn new(sig: &'a #sig_name, input: &'a #i_name, comb: &'a #comb_name) -> Self {
-                #body
+                Self {
+                    #(#left: &#right,)*
+                }
             }
         }
     };
@@ -192,11 +197,16 @@ pub fn comb(_: TokenStream, item: TokenStream) -> TokenStream {
     let comb_name = quote::format_ident!("{}Comb", ident);
     let sig_name = quote::format_ident!("{}Sig", ident);
     let i_name = quote::format_ident!("{}Input", ident);
-    let body = &func.block;
+    let p = CombParse::parse(&func.block.stmts);
+    let left = p.left;
+    let func = p.func;
+    let args = p.args;
     let gen = quote! {
         impl <'a> #comb_name<'a> {
             pub fn new(sig: &'a #sig_name, input: &'a #i_name) -> Self {
-                #body
+                Self {
+                    #(#left: #func::new(#args),)*
+                }
             }
         }
     };
@@ -211,17 +221,23 @@ pub fn proc(_: TokenStream, item: TokenStream) -> TokenStream {
     let comb_name = quote::format_ident!("{}Comb", ident);
     let sig_name = quote::format_ident!("{}Sig", ident);
     let i_name = quote::format_ident!("{}Input", ident);
-    let body = &func.block;
+    let p = CombParse::parse(&func.block.stmts);
+    let left = p.left;
+    let func = p.func;
+    let args = p.args;
     let gen = quote! {
         impl <'a> #proc_name<'a> {
             pub fn new(sig: &'a #sig_name, input: &'a #i_name, comb: &'a #comb_name) -> Self {
-                #body
+                Self {
+                    #(#left: #func::new(#args),)*
+                }
             }
         }
     };
     gen.into()
 }
 
+#[derive(Default)]
 struct ModuleParse {
     pub params_type: Vec<syn::GenericArgument>,
     pub params_name: Vec<syn::Ident>,
@@ -235,19 +251,63 @@ struct ModuleParse {
     pub procs_struc: Vec<syn::Ident>,
 }
 
-impl ModuleParse {
-    fn new() -> Self {
-        Self {
-            params_type: Vec::new(),
-            params_name: Vec::new(),
-            inputs_type: Vec::new(),
-            inputs_name: Vec::new(),
-            outputs_type: Vec::new(),
-            outputs_name: Vec::new(),
-            channel_fns: Vec::new(),
-            procs_type: Vec::new(),
-            procs_name: Vec::new(),
-            procs_struc: Vec::new(),
+#[derive(Default)]
+struct OutParse {
+    pub left: Vec<syn::Expr>,
+    pub right: Vec<syn::Expr>,
+}
+
+impl OutParse {
+    fn parse(stmts: &Vec<syn::Stmt>) -> Self {
+        stmts.iter().fold(OutParse::default(), |mut m, x| {
+            match x {
+                syn::Stmt::Semi(x, _) => {
+                    match x {
+                        syn::Expr::Assign(x) => {
+                            m.left.push(*x.left.clone());
+                            m.right.push(*x.right.clone());
+                            m
+                        },
+                        _ => panic!("Error, assignment expression expected!"),
+                    }
+                },
+                _ => panic!("Error, expression with trailing semicolon expected!"),
+            }
         }
+        )
+    }
+}
+
+#[derive(Default)]
+struct CombParse {
+    pub left: Vec<syn::Expr>,
+    pub func: Vec<syn::Expr>,
+    pub args: Vec< syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
+}
+
+impl CombParse {
+    fn parse(stmts: &Vec<syn::Stmt>) -> Self {
+        stmts.iter().fold(CombParse::default(), |mut m, x| {
+            match x {
+                syn::Stmt::Semi(x, _) => {
+                    match x {
+                        syn::Expr::Assign(x) => {
+                            match &*x.right {
+                                syn::Expr::Call(x) => {
+                                    m.func.push(*x.func.clone());
+                                    m.args.push(x.args.clone());
+                                },
+                                _ => panic!("Error, function call expression  expected!"),
+                            };
+                            m.left.push(*x.left.clone());
+                            m
+                        },
+                        _ => panic!("Error, assignment expression expected!"),
+                    }
+                },
+                _ => panic!("Error, expression with trailing semicolon expected!"),
+            }
+        }
+        )
     }
 }

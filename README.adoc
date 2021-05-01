@@ -80,10 +80,8 @@ struct MyModule {
 ----
 #[comb]
 fn MyModule() {
-    Self {
-        x_d: CFunc1::new(&sig.x_q),
-        y: CFunc2::new(input.a_i),
-    }
+    x_d = CFunc1(&sig.x_q);
+    y = CFunc2(input.a_i);
 }
 ----
 
@@ -91,9 +89,7 @@ fn MyModule() {
 ----
 #[proc]
 fn MyModule() {
-    Self {
-        x_q: RegRst::new(&comb.x_d, &sig.x_q, input.rst_ni, &input.P1),
-    }
+        x_q = RegRst(&comb.x_d, &sig.x_q, input.rst_ni, &input.P1);
 }
 ----
 
@@ -101,9 +97,7 @@ fn MyModule() {
 ----
 #[out]
 fn MyModule() {
-    Self {
-        x_o: &sig.x_q,
-        y_o: &comb.y,
-    }
+    x_o = sig.x_q;
+    y_o = comb.y;
 }
 ----
