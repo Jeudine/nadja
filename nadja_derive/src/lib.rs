@@ -53,9 +53,8 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
     let o_name = quote::format_ident!("{}Output", module_name);
     let proc_name = quote::format_ident!("{}Proc", module_name);
     let m_name = quote::format_ident!("{}m", module_name);
-
     let attrs: ModuleParse = match struc.fields {
-        syn::Fields::Named(p) => p.named.iter().fold(ModuleParse::default(), |mut m, x| {
+        syn::Fields::Named(ref p) => p.named.iter().fold(ModuleParse::default(), |mut m, x| {
             match x.ty {
                 syn::Type::Path(ref p) => {
                     let ps = p.path.segments.first().unwrap();
@@ -63,29 +62,29 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
                         "Param" => {
                             m.params_type.push(
                                 match &ps.arguments {
-                                    syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap().clone(),
+                                    syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap(),
                                     _ => panic!("Error, `<` expected!"),
                                 });
-                            m.params_name.push(x.ident.as_ref().unwrap().clone());
+                            m.params_name.push(x.ident.as_ref().unwrap());
                         },
                         "Input" => {
-                            m.inputs_type.push(x.ty.clone());
-                            m.inputs_name.push(x.ident.as_ref().unwrap().clone());
+                            m.inputs_type.push(&x.ty);
+                            m.inputs_name.push(x.ident.as_ref().unwrap());
                         },
                         "Output" => {
-                            m.outputs_type.push(x.ty.clone());
-                            m.outputs_name.push(x.ident.as_ref().unwrap().clone());
+                            m.outputs_type.push(&x.ty);
+                            m.outputs_name.push(x.ident.as_ref().unwrap());
                         },
                         "RegRst" | "Reg" => {
                             m.procs_type.push(
                                 match &ps.arguments {
-                                    syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap().clone(),
+                                    syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap(),
                                     _ => panic!("Error, `<` expected!"),
                                 });
-                            m.procs_name.push(x.ident.as_ref().unwrap().clone());
-                            m.procs_struc.push(ps.ident.clone());
+                            m.procs_name.push(x.ident.as_ref().unwrap());
+                            m.procs_struc.push(&ps.ident);
                         },
-                        _ => m.channel_fns.push(x.clone()),
+                        _ => m.channel_fns.push(x),
                     };
                     m
                 }
@@ -238,34 +237,34 @@ pub fn proc(_: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[derive(Default)]
-struct ModuleParse {
-    pub params_type: Vec<syn::GenericArgument>,
-    pub params_name: Vec<syn::Ident>,
-    pub inputs_type: Vec<syn::Type>,
-    pub inputs_name: Vec<syn::Ident>,
-    pub outputs_type: Vec<syn::Type>,
-    pub outputs_name: Vec<syn::Ident>,
-    pub channel_fns: Vec<syn::Field>,
-    pub procs_type: Vec<syn::GenericArgument>,
-    pub procs_name: Vec<syn::Ident>,
-    pub procs_struc: Vec<syn::Ident>,
+struct ModuleParse<'a> {
+    pub params_type: Vec<&'a syn::GenericArgument>,
+    pub params_name: Vec<&'a syn::Ident>,
+    pub inputs_type: Vec<&'a syn::Type>,
+    pub inputs_name: Vec<&'a syn::Ident>,
+    pub outputs_type: Vec<&'a syn::Type>,
+    pub outputs_name: Vec<&'a syn::Ident>,
+    pub channel_fns: Vec<&'a syn::Field>,
+    pub procs_type: Vec<&'a syn::GenericArgument>,
+    pub procs_name: Vec<&'a syn::Ident>,
+    pub procs_struc: Vec<&'a syn::Ident>,
 }
 
 #[derive(Default)]
-struct OutParse {
-    pub left: Vec<syn::Expr>,
-    pub right: Vec<syn::Expr>,
+struct OutParse<'a> {
+    pub left: Vec<&'a syn::Expr>,
+    pub right: Vec<&'a syn::Expr>,
 }
 
-impl OutParse {
-    fn parse(stmts: &Vec<syn::Stmt>) -> Self {
+impl<'a> OutParse<'a> {
+    fn parse(stmts: &'a Vec<syn::Stmt>) -> Self {
         stmts.iter().fold(OutParse::default(), |mut m, x| {
             match x {
                 syn::Stmt::Semi(x, _) => {
                     match x {
                         syn::Expr::Assign(x) => {
-                            m.left.push(*x.left.clone());
-                            m.right.push(*x.right.clone());
+                            m.left.push(&x.left);
+                            m.right.push(&x.right);
                             m
                         },
                         _ => panic!("Error, assignment expression expected!"),
@@ -279,14 +278,14 @@ impl OutParse {
 }
 
 #[derive(Default)]
-struct CombParse {
-    pub left: Vec<syn::Expr>,
-    pub func: Vec<syn::Expr>,
-    pub args: Vec< syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
+struct CombParse<'a> {
+    pub left: Vec<&'a syn::Expr>,
+    pub func: Vec<&'a syn::Expr>,
+    pub args: Vec<&'a syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
 }
 
-impl CombParse {
-    fn parse(stmts: &Vec<syn::Stmt>) -> Self {
+impl<'a> CombParse<'a> {
+    fn parse(stmts: &'a Vec<syn::Stmt>) -> Self {
         stmts.iter().fold(CombParse::default(), |mut m, x| {
             match x {
                 syn::Stmt::Semi(x, _) => {
@@ -294,12 +293,12 @@ impl CombParse {
                         syn::Expr::Assign(x) => {
                             match &*x.right {
                                 syn::Expr::Call(x) => {
-                                    m.func.push(*x.func.clone());
-                                    m.args.push(x.args.clone());
+                                    m.func.push(&x.func);
+                                    m.args.push(&x.args);
                                 },
                                 _ => panic!("Error, function call expression  expected!"),
                             };
-                            m.left.push(*x.left.clone());
+                            m.left.push(&x.left);
                             m
                         },
                         _ => panic!("Error, assignment expression expected!"),

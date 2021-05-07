@@ -13,6 +13,7 @@ An event-driven simulator specifically designed for digital circuits.
 * Generate trace files
 * macros for concat
 * Generate SystemVerilog code
+* Directly jump to dates at which there are events
 
 == Usage (WIP)
 
