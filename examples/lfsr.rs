@@ -30,15 +30,8 @@ struct LFSR {
     rst_ni: Input<bool>,
     //Output
     state_o: Output<VLogic<WIDTH>>,
-    //Channel function
-    state_d: CFunc,
     //Process
     state_q: RegRst<VLogic<WIDTH>>,
-}
-
-#[out]
-fn LFSR() {
-    state_o = sig.state_q;
 }
 
 #[comb]
@@ -49,6 +42,11 @@ fn LFSR() {
 #[proc]
 fn LFSR() {
     state_q = RegRst(&comb.state_d, &sig.state_q, input.rst_ni, &input.INIT_STATE);
+}
+
+#[out]
+fn LFSR() {
+    state_o = sig.state_q;
 }
 
 fn main() {

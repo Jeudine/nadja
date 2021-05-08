@@ -1,6 +1,6 @@
 = Nadja (WIP)
 
-An event-driven simulator specifically designed for digital circuits.
+A hardware description language using Rust syntax, combined with an event-driven simulator.
 
 == TODO
 
