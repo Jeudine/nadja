@@ -282,7 +282,7 @@ impl<'a> OutParse<'a> {
 struct CombParse<'a> {
     pub left: Vec<&'a syn::Expr>,
     pub func: Vec<&'a syn::Expr>,
-    pub args: Vec<&'a syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
+    pub args: Vec<syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
 }
 
 impl<'a> CombParse<'a> {
@@ -295,7 +295,9 @@ impl<'a> CombParse<'a> {
                             match &*x.right {
                                 syn::Expr::Call(x) => {
                                     m.func.push(&x.func);
-                                    m.args.push(&x.args);
+                                    m.args.push(x.args.iter().map(|x| {
+                                        syn::punctuated::Pair::Punctuated(x.clone(),syn::token::Comma::default())
+                                    }).collect());
                                 },
                                 _ => panic!("Error, function call expression  expected!"),
                             };
