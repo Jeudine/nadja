@@ -50,6 +50,7 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
     let sig_name = quote::format_ident!("{}Sig", module_name);
     let comb_name = quote::format_ident!("{}Comb", module_name);
     let i_name = quote::format_ident!("{}Input", module_name);
+    let i_sig_name = quote::format_ident!("{}InputSig", module_name);
     let o_name = quote::format_ident!("{}Output", module_name);
     let proc_name = quote::format_ident!("{}Proc", module_name);
     let m_name = quote::format_ident!("{}m", module_name);
@@ -117,6 +118,23 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
             #(#inputs_name: &'a #inputs_type,)*
         }
 
+        pub struct #i_sig_name<'a> {
+            #(#params_name: &'a #params_type,)*
+            #(#inputs_name: &'a #inputs_type,)*
+            #(#procs_name: &'a Signal<#procs_type>,)*
+        }
+
+        impl<'a> #i_sig_name<'a> {
+            fn new(input: &'a#i_name, sig: &'a#sig_name) -> Self {
+                Self {
+                    #(#params_name: &input.#params_name,)*
+                    #(#inputs_name: input.#inputs_name,)*
+                    #(#procs_name: &sig.#procs_name,)*
+                }
+            }
+        }
+
+        
         pub struct #o_name<'a> {
             #(pub #outputs_name: &'a #outputs_type,)*
         }
@@ -142,6 +160,7 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
                 mashup! {
                     #m_name["sig" $i] = sig_ $i;
                     #m_name["input" $i] = input_ $i;
+                    #m_name["i_sig" $i] = input_sig_ $i;
                     #m_name["comb" $i] = comb_ $i;
                 }
                 #m_name! {
@@ -151,7 +170,8 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
                             $fn: $expr,
                             )*
                     };
-                    let "comb" $i = #comb_name::new(& "sig" $i, & "input" $i);
+                    let "i_sig" $i = #i_sig_name::new(& "input" $i, & "sig" $i);
+                    let "comb" $i = #comb_name::new(& "i_sig" $i);
                     let $i = #module_name {
                         o: #o_name::new(& "sig" $i, & "input" $i, & "comb" $i),
                         p: #proc_name::new(& "sig" $i, & "input" $i, & "comb" $i),
@@ -168,24 +188,43 @@ pub fn comb(_: TokenStream, item: TokenStream) -> TokenStream {
     let func = syn::parse_macro_input!(item as syn::ItemFn);
     let ident = &func.sig.ident;
     let comb_name = quote::format_ident!("{}Comb", ident);
-    let sig_name = quote::format_ident!("{}Sig", ident);
-    let i_name = quote::format_ident!("{}Input", ident);
+    let i_sig_name = quote::format_ident!("{}InputSig", ident);
+    let c_i_sig_name = quote::format_ident!("{}CombInputSig", ident);
     let p = CombParse::parse(&func.block.stmts);
     let left = p.left;
     let func = p.func;
     let args = p.args;
+    //TODO: modify args
     let gen = quote! {
         pub struct #comb_name<'a> {
             #(#left: #func<'a>,)*
         }
 
         impl <'a> #comb_name<'a> {
-            pub fn new(sig: &'a #sig_name, input: &'a #i_name) -> Self {
+            pub fn new(i_sig: &'a #i_sig_name) -> Self {
                 Self {
                     #(#left: #func::new(#args),)*
                 }
             }
         }
+/*
+        pub struct #c_i_sig_name<'a> {
+            #(#params_name: &'a #params_type,)*
+            #(#inputs_name: &'a #inputs_type,)*
+            #(#procs_name: &'a Signal<#procs_type>,)*
+            #
+        }
+
+        impl<'a> #c_i_sig_name<'a> {
+            fn new(i_sig: &'a#i_sig_name, comb: &'a#comb_name) -> Self {
+                Self {
+                    #(#params_name: &input.#params_name,)*
+                    #(#inputs_name: input.#inputs_name,)*
+                    #(#procs_name: &sig.#procs_name,)*
+                }
+            }
+        }
+        */
     };
     gen.into()
 }

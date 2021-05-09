@@ -68,10 +68,6 @@ struct MyModule {
     x_o: Output<type_o1>,
     y_o: Output<type_o1>,
 
-    //Channel function
-    x_d: CFunc1,
-    y: CFunc2,
-
     //Process
     x_q: RegRst<type_1>,
 }
@@ -81,7 +77,8 @@ struct MyModule {
 ----
 #[comb]
 fn MyModule() {
-    x_d = CFunc1(&sig.x_q);
+    //Channel function
+    x_d = CFunc1(sig.x_q);
     y = CFunc2(input.a_i);
 }
 ----
@@ -90,7 +87,7 @@ fn MyModule() {
 ----
 #[proc]
 fn MyModule() {
-        x_q = RegRst(&comb.x_d, &sig.x_q, input.rst_ni, &input.P1);
+        x_q = RegRst(comb.x_d, input.rst_ni, input.P1);
 }
 ----
 

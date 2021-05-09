@@ -36,7 +36,7 @@ struct LFSR {
 
 #[comb]
 fn LFSR() {
-    state_d = CFunc(&sig.state_q);
+    state_d = CFunc(i_sig.state_q);
 }
 
 #[proc]
