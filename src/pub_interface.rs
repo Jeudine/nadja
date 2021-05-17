@@ -9,10 +9,13 @@ pub trait Channel<T: TChannel> {
 }
 
 /// Input port of a module
-pub type Input<T> = dyn Channel<T>;
+pub type In<T> = dyn Channel<T>;
 
 /// Output port of a module
-pub type Output<T> = dyn Channel<T>;
+pub type Out<T> = dyn Channel<T>;
 
-///  Inout port of a module
+/// Inout port of a module
 pub type InOut<T> = dyn Channel<T>;
+
+/// Parameter of a module
+pub type Param<T> = T;

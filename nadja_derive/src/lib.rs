@@ -2,6 +2,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn;
+use std::collections::HashMap;
 
 #[proc_macro_attribute]
 pub fn channel(_: TokenStream, item: TokenStream) -> TokenStream {
@@ -43,6 +44,103 @@ pub fn channel(_: TokenStream, item: TokenStream) -> TokenStream {
     gen.into()
 }
 
+struct PioNode<'a> {
+    name: &'a syn::Ident,
+    ty: &'a syn::Type,
+}
+
+struct ProcNode<'a> {
+    name: &'a syn::Ident,
+    ty: &'a syn::Type,
+    proc: &'a syn::Expr,
+    args: Vec<syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
+}
+
+struct CombNode<'a> {
+    name: &'a syn::Ident,
+    channel: &'a syn::Expr,
+    args: Vec<syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
+}
+
+#[derive(Default)]
+struct ModuleAst<'a> {
+    pis: Vec<PioNode<'a>>,
+    outs: Vec<PioNode<'a>>,
+    combs: Vec<CombNode<'a>>,
+    procs: Vec<ProcNode<'a>>,
+}
+#[proc_macro_attribute]
+pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
+    let module = syn::parse_macro_input!(item as syn::ItemMod);
+    let mod_name = &module.ident;
+    let mod_vis = &module.vis;
+    let content = module.content.expect("module has an empty content").1;
+
+    content.iter().fold(ModuleAst::default(), |mut m, x|
+                        { match x {
+                                //pio
+                                syn::Item::Struct(x) => {
+                                    assert!(x.ident.to_string().eq(&String::from("pio")), "unexpected struct in module definition");
+                                    match x.fields {
+                                        syn::Fields::Named(ref x) =>
+                                            x.named.iter().for_each(|x|
+                                                                    match x.ty {
+                                            syn::Type::Path(ref p) =>
+                                                match p.path.segments.last().unwrap().ident.to_string().as_str() {
+                                                    "In" | "Param" => m.pis.push(PioNode {
+                                                        name: x.ident.as_ref().unwrap(),
+                                                        ty: &x.ty,
+                                                    }),
+                                                    "Out" => m.outs.push(PioNode {
+                                                        name: x.ident.as_ref().unwrap(),
+                                                        ty: &x.ty,
+                                                    }),
+                                                    _ => panic!("unexpected path"),
+                                                },
+                                            _ => panic!("unexpected type"),
+                                            /*
+
+                                                    name: x.ident  }),
+
+                                                        }),
+                                                    "Out" => {
+                                                    },
+                                                    _ => panic!("unexpected port"),
+                                                    */
+                                        }),
+                                        _ => panic!("unexpected field"),
+                                    };
+                                },
+                                //comb() & out()
+                                syn::Item::Fn(x) => {},//TODO,
+                                //procs
+                                syn::Item::Static(x) => {},//TODO,
+                                _ => panic!("unexpected item in module definition"),
+                            };
+m}
+                            );
+    let gen = quote! {
+        #mod_vis mod #mod_name {
+            //TODO: visibility of each struct
+            struct ParamIn {
+            }
+
+            struct Sig {
+            }
+
+            struct Comb {
+            }
+
+            struct Proc {
+            }
+
+            struct Out {
+            }
+        }
+    };
+    gen.into()
+}
+/*
 #[proc_macro_attribute]
 pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
     let struc = syn::parse_macro_input!(item as syn::ItemStruct);
@@ -51,6 +149,7 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
     let comb_name = quote::format_ident!("{}Comb", module_name);
     let i_name = quote::format_ident!("{}Input", module_name);
     let i_sig_name = quote::format_ident!("{}InputSig", module_name);
+    let c_i_sig_name = quote::format_ident!("{}CombInputSig", ident);
     let o_name = quote::format_ident!("{}Output", module_name);
     let proc_name = quote::format_ident!("{}Proc", module_name);
     let m_name = quote::format_ident!("{}m", module_name);
@@ -132,9 +231,12 @@ pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
                     #(#procs_name: &sig.#procs_name,)*
                 }
             }
+
+            fn toComb(&self) -> #c_i_sig_name {
+
+            }
         }
 
-        
         pub struct #o_name<'a> {
             #(pub #outputs_name: &'a #outputs_type,)*
         }
@@ -207,51 +309,39 @@ pub fn comb(_: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
         }
-/*
         pub struct #c_i_sig_name<'a> {
             #(#params_name: &'a #params_type,)*
             #(#inputs_name: &'a #inputs_type,)*
             #(#procs_name: &'a Signal<#procs_type>,)*
-            #
-        }
-
-        impl<'a> #c_i_sig_name<'a> {
-            fn new(i_sig: &'a#i_sig_name, comb: &'a#comb_name) -> Self {
-                Self {
-                    #(#params_name: &input.#params_name,)*
-                    #(#inputs_name: input.#inputs_name,)*
-                    #(#procs_name: &sig.#procs_name,)*
-                }
-            }
-        }
-        */
-    };
-    gen.into()
-}
+            #(#left: 
+              }
+              };
+              gen.into()
+              }
 
 #[proc_macro_attribute]
-pub fn proc(_: TokenStream, item: TokenStream) -> TokenStream {
-    let func = syn::parse_macro_input!(item as syn::ItemFn);
-    let ident = &func.sig.ident;
-    let proc_name = quote::format_ident!("{}Proc", ident);
-    let comb_name = quote::format_ident!("{}Comb", ident);
-    let sig_name = quote::format_ident!("{}Sig", ident);
-    let i_name = quote::format_ident!("{}Input", ident);
-    let p = CombParse::parse(&func.block.stmts);
-    let left = p.left;
-    let func = p.func;
-    let args = p.args;
-    let gen = quote! {
-        impl <'a> #proc_name<'a> {
-            pub fn new(sig: &'a #sig_name, input: &'a #i_name, comb: &'a #comb_name) -> Self {
-                Self {
-                    #(#left: #func::new(#args),)*
-                }
-            }
-        }
-    };
-    gen.into()
-}
+              pub fn proc(_: TokenStream, item: TokenStream) -> TokenStream {
+                  let func = syn::parse_macro_input!(item as syn::ItemFn);
+                  let ident = &func.sig.ident;
+                  let proc_name = quote::format_ident!("{}Proc", ident);
+                  let comb_name = quote::format_ident!("{}Comb", ident);
+                  let sig_name = quote::format_ident!("{}Sig", ident);
+                  let i_name = quote::format_ident!("{}Input", ident);
+                  let p = CombParse::parse(&func.block.stmts);
+                  let left = p.left;
+                  let func = p.func;
+                  let args = p.args;
+                  let gen = quote! {
+                      impl <'a> #proc_name<'a> {
+                          pub fn new(sig: &'a #sig_name, input: &'a #i_name, comb: &'a #comb_name) -> Self {
+                              Self {
+                                  #(#left: #func::new(#args),)*
+                              }
+                          }
+                      }
+                  };
+                  gen.into()
+              }
 
 #[proc_macro_attribute]
 pub fn out(_: TokenStream, item: TokenStream) -> TokenStream {
@@ -277,18 +367,7 @@ pub fn out(_: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 
-#[derive(Default)]
-struct ModuleParse<'a> {
-    pub params_type: Vec<&'a syn::GenericArgument>,
-    pub params_name: Vec<&'a syn::Ident>,
-    pub inputs_type: Vec<&'a syn::Type>,
-    pub inputs_name: Vec<&'a syn::Ident>,
-    pub outputs_type: Vec<&'a syn::Type>,
-    pub outputs_name: Vec<&'a syn::Ident>,
-    pub procs_type: Vec<&'a syn::GenericArgument>,
-    pub procs_name: Vec<&'a syn::Ident>,
-    pub procs_struc: Vec<&'a syn::Ident>,
-}
+
 
 #[derive(Default)]
 struct OutParse<'a> {
@@ -352,3 +431,4 @@ impl<'a> CombParse<'a> {
         )
     }
 }
+*/

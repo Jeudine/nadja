@@ -22,6 +22,31 @@ fn CFunc(state_i: VLogic<WIDTH>) -> VLogic<WIDTH> {
     )
 }
 
+#[seq]
+/* mod LFSR {
+*
+* struct pio {
+  //Parameter
+  INIT_STATE: Param<VLogic<WIDTH>>,
+  //Input
+   rst_ni: Input<bool>,
+   //Output
+   state_o: Output<VLogic<WIDTH>>,
+* }
+*
+* fn comb() {
+*      state_d = CFunc(state_q);
+* }
+*
+   //Process
+   static state_q: VLogic<WIDTH> = RegRst(state_d, rst_ni, INIT_STATE);
+
+   fn out() {
+       state_o = state_q;
+   }
+
+* }
+*/
 #[module]
 struct LFSR {
     //Parameter
