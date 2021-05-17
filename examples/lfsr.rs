@@ -3,7 +3,7 @@
 //TODO simplify the use
 use nadja::logic::{concat, Logic, VLogic};
 use nadja::process::{Clk, RegRst, Rst};
-use nadja::{Channel, Input, Output, Signal, Simulator, Wire};
+use nadja::{Channel, In, Out, Signal, Simulator, Wire, Param};
 //TODO simplify macro
 #[macro_use]
 extern crate derive_new;
@@ -23,62 +23,63 @@ fn CFunc(state_i: VLogic<WIDTH>) -> VLogic<WIDTH> {
 }
 
 #[seq]
-/* mod LFSR {
-*
-* struct pio {
-  //Parameter
-  INIT_STATE: Param<VLogic<WIDTH>>,
-  //Input
-   rst_ni: Input<bool>,
-   //Output
-   state_o: Output<VLogic<WIDTH>>,
-* }
-*
-* fn comb() {
-*      state_d = CFunc(state_q);
-* }
-*
-   //Process
-   static state_q: VLogic<WIDTH> = RegRst(state_d, rst_ni, INIT_STATE);
+mod lfsr {
+    struct pio {
+        //Parameter
+        INIT_STATE: Param<VLogic<WIDTH>>,
+        //Input
+        rst_ni: In<bool>,
+        //Output
+        state_o: Out<VLogic<WIDTH>>,
+    }
 
-   fn out() {
-       state_o = state_q;
-   }
+    fn comb() {
+        state_d = CFunc(state_q);
+    }
 
-* }
-*/
+    //Process
+    static state_q: VLogic<WIDTH> = RegRst(state_d, rst_ni, INIT_STATE);
+
+    fn out() {
+        state_o = state_q;
+    }
+
+}
+
+/*
 #[module]
 struct LFSR {
-    //Parameter
-    INIT_STATE: Param<VLogic<WIDTH>>,
-    //Input
-    rst_ni: Input<bool>,
-    //Output
-    state_o: Output<VLogic<WIDTH>>,
-    //Process
-    state_q: RegRst<VLogic<WIDTH>>,
+//Parameter
+INIT_STATE: Param<VLogic<WIDTH>>,
+//Input
+rst_ni: Input<bool>,
+//Output
+state_o: Output<VLogic<WIDTH>>,
+//Process
+state_q: RegRst<VLogic<WIDTH>>,
 }
 
 #[comb]
 fn LFSR() {
-    state_d = CFunc(i_sig.state_q);
+state_d = CFunc(i_sig.state_q);
 }
 
 #[proc]
 fn LFSR() {
-    state_q = RegRst(&comb.state_d, &sig.state_q, input.rst_ni, &input.INIT_STATE);
+state_q = RegRst(&comb.state_d, &sig.state_q, input.rst_ni, &input.INIT_STATE);
 }
 
 #[out]
 fn LFSR() {
-    state_o = sig.state_q;
+state_o = sig.state_q;
 }
-
+*/
 fn main() {
+    /*
     //parameter
     let INIT_STATE = concat(
-        VLogic::new([Logic::Logic1; 1]),
-        VLogic::new([Logic::Logic0; WIDTH - 1]),
+    VLogic::new([Logic::Logic1; 1]),
+    VLogic::new([Logic::Logic0; WIDTH - 1]),
     );
 
     //input
@@ -86,8 +87,8 @@ fn main() {
 
     //instance
     LFSR!(i_LFSR {
-        INIT_STATE: INIT_STATE,
-        rst_ni: &rst_ni,
+    INIT_STATE: INIT_STATE,
+    rst_ni: &rst_ni,
     });
 
     // clk & rst
@@ -100,4 +101,5 @@ fn main() {
 
     //output
     println!("{:?}", i_LFSR.o.state_o);
+    */
 }

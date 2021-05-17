@@ -76,7 +76,7 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
     let mod_vis = &module.vis;
     let content = module.content.expect("module has an empty content").1;
 
-    content.iter().fold(ModuleAst::default(), |mut m, x|
+    let mod_ast = content.iter().fold(ModuleAst::default(), |mut m, x|
                         { match x {
                                 //pio
                                 syn::Item::Struct(x) => {
@@ -98,15 +98,6 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
                                                     _ => panic!("unexpected path"),
                                                 },
                                             _ => panic!("unexpected type"),
-                                            /*
-
-                                                    name: x.ident  }),
-
-                                                        }),
-                                                    "Out" => {
-                                                    },
-                                                    _ => panic!("unexpected port"),
-                                                    */
                                         }),
                                         _ => panic!("unexpected field"),
                                     };
@@ -118,11 +109,21 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
                                 _ => panic!("unexpected item in module definition"),
                             };
 m}
-                            );
+    );
+
+    let pi_name = mod_ast.pis.iter().map(|x| x.name);
+    let pi_ty = mod_ast.pis.iter().map(|x| x.ty);
+
     let gen = quote! {
         #mod_vis mod #mod_name {
+            use nadja::logic::{concat, Logic, VLogic};
+            use nadja::process::{Clk, RegRst, Rst};
+            use nadja::{Channel, In, Out, Signal, Simulator, Wire, Param};
+            //TODO const
+            use super::WIDTH;
             //TODO: visibility of each struct
-            struct ParamIn {
+            struct ParamIn<'a> {
+                #(#pi_name: &'a #pi_ty,)*
             }
 
             struct Sig {
@@ -134,7 +135,7 @@ m}
             struct Proc {
             }
 
-            struct Out {
+            struct Output {
             }
         }
     };
@@ -143,147 +144,147 @@ m}
 /*
 #[proc_macro_attribute]
 pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
-    let struc = syn::parse_macro_input!(item as syn::ItemStruct);
-    let module_name = &struc.ident;
-    let sig_name = quote::format_ident!("{}Sig", module_name);
-    let comb_name = quote::format_ident!("{}Comb", module_name);
-    let i_name = quote::format_ident!("{}Input", module_name);
-    let i_sig_name = quote::format_ident!("{}InputSig", module_name);
-    let c_i_sig_name = quote::format_ident!("{}CombInputSig", ident);
-    let o_name = quote::format_ident!("{}Output", module_name);
-    let proc_name = quote::format_ident!("{}Proc", module_name);
-    let m_name = quote::format_ident!("{}m", module_name);
-    let attrs: ModuleParse = match struc.fields {
-        syn::Fields::Named(ref p) => p.named.iter().fold(ModuleParse::default(), |mut m, x| {
-            match x.ty {
-                syn::Type::Path(ref p) => {
-                    let ps = p.path.segments.first().unwrap();
-                    match ps.ident.to_string().as_str() {
-                        "Param" => {
-                            m.params_type.push(
-                                match &ps.arguments {
-                                    syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap(),
-                                    _ => panic!("Error, `<` expected!"),
-                                });
-                            m.params_name.push(x.ident.as_ref().unwrap());
-                        },
-                        "Input" => {
-                            m.inputs_type.push(&x.ty);
-                            m.inputs_name.push(x.ident.as_ref().unwrap());
-                        },
-                        "Output" => {
-                            m.outputs_type.push(&x.ty);
-                            m.outputs_name.push(x.ident.as_ref().unwrap());
-                        },
-                        "RegRst" | "Reg" => {
-                            m.procs_type.push(
-                                match &ps.arguments {
-                                    syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap(),
-                                    _ => panic!("Error, `<` expected!"),
-                                });
-                            m.procs_name.push(x.ident.as_ref().unwrap());
-                            m.procs_struc.push(&ps.ident);
-                        },
+let struc = syn::parse_macro_input!(item as syn::ItemStruct);
+let module_name = &struc.ident;
+let sig_name = quote::format_ident!("{}Sig", module_name);
+let comb_name = quote::format_ident!("{}Comb", module_name);
+let i_name = quote::format_ident!("{}Input", module_name);
+let i_sig_name = quote::format_ident!("{}InputSig", module_name);
+let c_i_sig_name = quote::format_ident!("{}CombInputSig", ident);
+let o_name = quote::format_ident!("{}Output", module_name);
+let proc_name = quote::format_ident!("{}Proc", module_name);
+let m_name = quote::format_ident!("{}m", module_name);
+let attrs: ModuleParse = match struc.fields {
+syn::Fields::Named(ref p) => p.named.iter().fold(ModuleParse::default(), |mut m, x| {
+match x.ty {
+syn::Type::Path(ref p) => {
+let ps = p.path.segments.first().unwrap();
+match ps.ident.to_string().as_str() {
+"Param" => {
+m.params_type.push(
+match &ps.arguments {
+syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap(),
+_ => panic!("Error, `<` expected!"),
+});
+m.params_name.push(x.ident.as_ref().unwrap());
+},
+"Input" => {
+m.inputs_type.push(&x.ty);
+m.inputs_name.push(x.ident.as_ref().unwrap());
+},
+"Output" => {
+m.outputs_type.push(&x.ty);
+m.outputs_name.push(x.ident.as_ref().unwrap());
+},
+"RegRst" | "Reg" => {
+m.procs_type.push(
+match &ps.arguments {
+syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap(),
+_ => panic!("Error, `<` expected!"),
+});
+m.procs_name.push(x.ident.as_ref().unwrap());
+m.procs_struc.push(&ps.ident);
+},
 
-                        _ => panic!("Error, unexpected field!"),
-                    };
-                    m
-                }
-                _ => panic!("Error, wrong type!"),
-            }
-        }
-        ),
-        _ => panic!("Error, named field expected!"),
-    };
-
-    let params_type = &attrs.params_type;
-    let params_name = &attrs.params_name;
-    let inputs_type = &attrs.inputs_type;
-    let inputs_name = &attrs.inputs_name;
-    let outputs_type = &attrs.outputs_type;
-    let outputs_name = &attrs.outputs_name;
-    let procs_name = &attrs.procs_name;
-    let procs_type = &attrs.procs_type;
-    let procs_struc = &attrs.procs_struc;
-
-    let gen = quote! {
-        #[derive(Default)]
-        pub struct #sig_name {
-            #(#procs_name: Signal<#procs_type>,)*
-        }
-
-        pub struct #i_name<'a> {
-            #(#params_name: #params_type,)*
-            #(#inputs_name: &'a #inputs_type,)*
-        }
-
-        pub struct #i_sig_name<'a> {
-            #(#params_name: &'a #params_type,)*
-            #(#inputs_name: &'a #inputs_type,)*
-            #(#procs_name: &'a Signal<#procs_type>,)*
-        }
-
-        impl<'a> #i_sig_name<'a> {
-            fn new(input: &'a#i_name, sig: &'a#sig_name) -> Self {
-                Self {
-                    #(#params_name: &input.#params_name,)*
-                    #(#inputs_name: input.#inputs_name,)*
-                    #(#procs_name: &sig.#procs_name,)*
-                }
-            }
-
-            fn toComb(&self) -> #c_i_sig_name {
-
-            }
-        }
-
-        pub struct #o_name<'a> {
-            #(pub #outputs_name: &'a #outputs_type,)*
-        }
-
-        pub struct #proc_name<'a> {
-            #(pub #procs_name: #procs_struc<'a, #procs_type>,)*
-        }
-
-        pub struct #module_name<'a> {
-            pub o: #o_name<'a>,
-            pub p: #proc_name<'a>,
-        }
-
-        #[macro_export]
-        macro_rules! #module_name {
-            (
-                $i:ident {
-                    $(
-                        $fn:ident: $expr:expr
-                     ),* $(,)*
-                }
-            ) => {
-                mashup! {
-                    #m_name["sig" $i] = sig_ $i;
-                    #m_name["input" $i] = input_ $i;
-                    #m_name["i_sig" $i] = input_sig_ $i;
-                    #m_name["comb" $i] = comb_ $i;
-                }
-                #m_name! {
-                    let "sig" $i = #sig_name::default();
-                    let "input" $i = #i_name {
-                        $(
-                            $fn: $expr,
-                            )*
-                    };
-                    let "i_sig" $i = #i_sig_name::new(& "input" $i, & "sig" $i);
-                    let "comb" $i = #comb_name::new(& "i_sig" $i);
-                    let $i = #module_name {
-                        o: #o_name::new(& "sig" $i, & "input" $i, & "comb" $i),
-                        p: #proc_name::new(& "sig" $i, & "input" $i, & "comb" $i),
-                    };
-                }
-            }
-        }
-    };
-    gen.into()
+_ => panic!("Error, unexpected field!"),
+};
+m
 }
+_ => panic!("Error, wrong type!"),
+}
+}
+),
+_ => panic!("Error, named field expected!"),
+};
+
+let params_type = &attrs.params_type;
+let params_name = &attrs.params_name;
+let inputs_type = &attrs.inputs_type;
+let inputs_name = &attrs.inputs_name;
+let outputs_type = &attrs.outputs_type;
+let outputs_name = &attrs.outputs_name;
+let procs_name = &attrs.procs_name;
+let procs_type = &attrs.procs_type;
+let procs_struc = &attrs.procs_struc;
+
+let gen = quote! {
+#[derive(Default)]
+pub struct #sig_name {
+#(#procs_name: Signal<#procs_type>,)*
+}
+
+pub struct #i_name<'a> {
+    #(#params_name: #params_type,)*
+    #(#inputs_name: &'a #inputs_type,)*
+}
+
+pub struct #i_sig_name<'a> {
+    #(#params_name: &'a #params_type,)*
+    #(#inputs_name: &'a #inputs_type,)*
+    #(#procs_name: &'a Signal<#procs_type>,)*
+}
+
+impl<'a> #i_sig_name<'a> {
+    fn new(input: &'a#i_name, sig: &'a#sig_name) -> Self {
+        Self {
+            #(#params_name: &input.#params_name,)*
+            #(#inputs_name: input.#inputs_name,)*
+            #(#procs_name: &sig.#procs_name,)*
+        }
+    }
+
+    fn toComb(&self) -> #c_i_sig_name {
+
+    }
+}
+
+pub struct #o_name<'a> {
+    #(pub #outputs_name: &'a #outputs_type,)*
+}
+
+pub struct #proc_name<'a> {
+    #(pub #procs_name: #procs_struc<'a, #procs_type>,)*
+}
+
+pub struct #module_name<'a> {
+    pub o: #o_name<'a>,
+    pub p: #proc_name<'a>,
+}
+
+#[macro_export]
+macro_rules! #module_name {
+    (
+        $i:ident {
+            $(
+                $fn:ident: $expr:expr
+             ),* $(,)*
+        }
+    ) => {
+        mashup! {
+            #m_name["sig" $i] = sig_ $i;
+            #m_name["input" $i] = input_ $i;
+            #m_name["i_sig" $i] = input_sig_ $i;
+            #m_name["comb" $i] = comb_ $i;
+        }
+        #m_name! {
+            let "sig" $i = #sig_name::default();
+            let "input" $i = #i_name {
+                $(
+                    $fn: $expr,
+                 )*
+            };
+            let "i_sig" $i = #i_sig_name::new(& "input" $i, & "sig" $i);
+            let "comb" $i = #comb_name::new(& "i_sig" $i);
+            let $i = #module_name {
+                o: #o_name::new(& "sig" $i, & "input" $i, & "comb" $i),
+                p: #proc_name::new(& "sig" $i, & "input" $i, & "comb" $i),
+            };
+        }
+    }
+}
+};
+gen.into()
+    }
 
 #[proc_macro_attribute]
 pub fn comb(_: TokenStream, item: TokenStream) -> TokenStream {
@@ -372,7 +373,7 @@ pub fn out(_: TokenStream, item: TokenStream) -> TokenStream {
 #[derive(Default)]
 struct OutParse<'a> {
     pub left: Vec<&'a syn::Expr>,
-    pub right: Vec<&'a syn::Expr>,
+        pub right: Vec<&'a syn::Expr>,
 }
 
 impl<'a> OutParse<'a> {
@@ -399,8 +400,8 @@ impl<'a> OutParse<'a> {
 #[derive(Default)]
 struct CombParse<'a> {
     pub left: Vec<&'a syn::Expr>,
-    pub func: Vec<&'a syn::Expr>,
-    pub args: Vec<syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
+        pub func: Vec<&'a syn::Expr>,
+        pub args: Vec<syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
 }
 
 impl<'a> CombParse<'a> {
