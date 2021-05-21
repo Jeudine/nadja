@@ -3,7 +3,7 @@
 //TODO simplify the use
 use nadja::logic::{concat, Logic, VLogic};
 use nadja::process::{Clk, RegRst, Rst};
-use nadja::{Channel, In, Out, Signal, Simulator, Wire, Param};
+use nadja::{Channel, In, Out, Param, Signal, Simulator, Wire};
 //TODO simplify macro
 #[macro_use]
 extern crate derive_new;
@@ -24,9 +24,15 @@ fn CFunc(state_i: VLogic<WIDTH>) -> VLogic<WIDTH> {
 
 #[seq]
 mod lfsr {
-    struct pio {
-        //Parameter
-        INIT_STATE: Param<VLogic<WIDTH>>,
+    /*
+    struct param {
+        WIDTH_param: usize,
+    }
+    */
+
+    const WIDTH: usize = 20;
+
+    struct io {
         //Input
         rst_ni: In<bool>,
         //Output
@@ -43,7 +49,6 @@ mod lfsr {
     fn out() {
         state_o = state_q;
     }
-
 }
 
 /*

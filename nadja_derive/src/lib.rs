@@ -1,30 +1,34 @@
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use quote::quote;
-use syn;
 use std::collections::HashMap;
+use syn;
 
 #[proc_macro_attribute]
 pub fn channel(_: TokenStream, item: TokenStream) -> TokenStream {
     let func = syn::parse_macro_input!(item as syn::ItemFn);
     let sig = &func.sig;
     let channel_name = &sig.ident;
-    let inputs_type = sig.inputs.iter().map(|x|
-                                            match x {
-                                                syn::FnArg::Typed(p) => p.ty.clone(),
-                                                _ => panic!("Not supported on types with `self`!"),
-                                            }
-                                           ).collect::<Vec<_>>();
+    let inputs_type = sig
+        .inputs
+        .iter()
+        .map(|x| match x {
+            syn::FnArg::Typed(p) => p.ty.clone(),
+            _ => panic!("not supported on types with `self`"),
+        })
+        .collect::<Vec<_>>();
 
-    let inputs_name = sig.inputs.iter().map(|x|
-                                            match x {
-                                                syn::FnArg::Typed(p) => p.pat.clone(),
-                                                _ => panic!("Not supported on types with `self`!"),
-                                            }
-                                           ).collect::<Vec<_>>();
+    let inputs_name = sig
+        .inputs
+        .iter()
+        .map(|x| match x {
+            syn::FnArg::Typed(p) => p.pat.clone(),
+            _ => panic!("not supported on types with `self`"),
+        })
+        .collect::<Vec<_>>();
     let output_type = match &sig.output {
         syn::ReturnType::Type(_, p) => p,
-        _ => panic!("Not supported on functions without return types!"),
+        _ => panic!("not supported on functions without return types"),
     };
     let body = &func.block;
 
@@ -44,7 +48,7 @@ pub fn channel(_: TokenStream, item: TokenStream) -> TokenStream {
     gen.into()
 }
 
-struct PioNode<'a> {
+struct IoNode<'a> {
     name: &'a syn::Ident,
     ty: &'a syn::Type,
 }
@@ -64,10 +68,54 @@ struct CombNode<'a> {
 
 #[derive(Default)]
 struct ModuleAst<'a> {
-    pis: Vec<PioNode<'a>>,
-    outs: Vec<PioNode<'a>>,
+    consts: Vec<&'a syn::ItemConst>,
+    ins: Vec<IoNode<'a>>,
+    outs: Vec<IoNode<'a>>,
     combs: Vec<CombNode<'a>>,
     procs: Vec<ProcNode<'a>>,
+}
+
+impl<'a> ModuleAst<'a> {
+    fn push_io(&mut self, item: &'a syn::ItemStruct) {
+        assert!(
+            item.ident.to_string().eq(&String::from("io")),
+            "unexpected struct in module definition"
+        );
+        match item.fields {
+            syn::Fields::Named(ref x) => x.named.iter().for_each(|x| match x.ty {
+                syn::Type::Path(ref p) => {
+                    match p.path.segments.last().unwrap().ident.to_string().as_str() {
+                        "In" => self.ins.push(IoNode {
+                            name: x.ident.as_ref().unwrap(),
+                            ty: &x.ty,
+                        }),
+                        "Out" => self.outs.push(IoNode {
+                            name: x.ident.as_ref().unwrap(),
+                            ty: &x.ty,
+                        }),
+                        _ => panic!("unexpected path"),
+                    }
+                }
+                _ => panic!("unexpected type"),
+            }),
+            _ => panic!("unexpected field"),
+        };
+    }
+
+    fn push_comb_out(&mut self, item: &'a syn::ItemFn) {
+        let fn_id = item.sig.ident.to_string();
+        let comb_id = String::from("comb");
+        assert!(
+            fn_id.eq(&comb_id) | fn_id.eq(&String::from("out")),
+            "unexpected function in module definition"
+        );
+
+        if fn_id.eq(&comb_id) {
+
+        } else {
+
+        }
+    }
 }
 #[proc_macro_attribute]
 pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
@@ -76,54 +124,32 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
     let mod_vis = &module.vis;
     let content = module.content.expect("module has an empty content").1;
 
-    let mod_ast = content.iter().fold(ModuleAst::default(), |mut m, x|
-                        { match x {
-                                //pio
-                                syn::Item::Struct(x) => {
-                                    assert!(x.ident.to_string().eq(&String::from("pio")), "unexpected struct in module definition");
-                                    match x.fields {
-                                        syn::Fields::Named(ref x) =>
-                                            x.named.iter().for_each(|x|
-                                                                    match x.ty {
-                                            syn::Type::Path(ref p) =>
-                                                match p.path.segments.last().unwrap().ident.to_string().as_str() {
-                                                    "In" | "Param" => m.pis.push(PioNode {
-                                                        name: x.ident.as_ref().unwrap(),
-                                                        ty: &x.ty,
-                                                    }),
-                                                    "Out" => m.outs.push(PioNode {
-                                                        name: x.ident.as_ref().unwrap(),
-                                                        ty: &x.ty,
-                                                    }),
-                                                    _ => panic!("unexpected path"),
-                                                },
-                                            _ => panic!("unexpected type"),
-                                        }),
-                                        _ => panic!("unexpected field"),
-                                    };
-                                },
-                                //comb() & out()
-                                syn::Item::Fn(x) => {},//TODO,
-                                //procs
-                                syn::Item::Static(x) => {},//TODO,
-                                _ => panic!("unexpected item in module definition"),
-                            };
-m}
-    );
-
-    let pi_name = mod_ast.pis.iter().map(|x| x.name);
-    let pi_ty = mod_ast.pis.iter().map(|x| x.ty);
+    let mod_ast = content.iter().fold(ModuleAst::default(), |mut m, x| {
+        match x {
+            syn::Item::Const(x) => m.consts.push(x),
+            syn::Item::Struct(x) => m.push_io(x),
+            syn::Item::Fn(x) => m.push_comb_out(x),
+            //procs
+            syn::Item::Static(x) => {} //TODO,
+            _ => panic!("unexpected item in module definition"),
+        };
+        m
+    });
+    let consts = &mod_ast.consts;
+    let ins_name = mod_ast.ins.iter().map(|x| x.name);
+    let ins_ty = mod_ast.ins.iter().map(|x| x.ty);
+    let outs_name = mod_ast.outs.iter().map(|x| x.name);
+    let outs_ty = mod_ast.outs.iter().map(|x| x.ty);
 
     let gen = quote! {
         #mod_vis mod #mod_name {
             use nadja::logic::{concat, Logic, VLogic};
             use nadja::process::{Clk, RegRst, Rst};
             use nadja::{Channel, In, Out, Signal, Simulator, Wire, Param};
-            //TODO const
-            use super::WIDTH;
+            #(#consts)*
             //TODO: visibility of each struct
-            struct ParamIn<'a> {
-                #(#pi_name: &'a #pi_ty,)*
+            struct Input<'a> {
+                #(#ins_name: &'a #ins_ty,)*
             }
 
             struct Sig {
@@ -136,6 +162,7 @@ m}
             }
 
             struct Output {
+                #(#outs_name: #outs_ty,)*
             }
         }
     };
@@ -314,7 +341,7 @@ pub fn comb(_: TokenStream, item: TokenStream) -> TokenStream {
             #(#params_name: &'a #params_type,)*
             #(#inputs_name: &'a #inputs_type,)*
             #(#procs_name: &'a Signal<#procs_type>,)*
-            #(#left: 
+            #(#left:
               }
               };
               gen.into()
