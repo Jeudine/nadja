@@ -55,47 +55,29 @@ let output = MyChannelFunc::new(&input1, &input2);
 
 [source, rust]
 ----
-#[module]
-struct MyModule {
-    //Parameters
-    P1: Param<type_1>,
+#[seq]
+mod my_module {
+    //Constant parameter
+    const PARAM: ty_p = val_p;
 
-    //Input
-    a_i: Input<type_i1>,
-    rst_ni: Input<bool>,
+    struct io {
+        //Input
+        a_i: In<ty_i1>,
+        rst_ni: In<bool>,
 
-    //Output
-    x_o: Output<type_o1>,
-    y_o: Output<type_o1>,
+        //Output
+        x_o: Out<ty_o1>,
+        y_o: Out<ty_o1>,
+    }
 
-    //Process
-    x_q: RegRst<type_1>,
-}
-----
-
-[source, rust]
-----
-#[comb]
-fn MyModule() {
-    //Channel function
-    x_d = CFunc1(sig.x_q);
-    y = CFunc2(input.a_i);
-}
-----
-
-[source, rust]
-----
-#[proc]
-fn MyModule() {
-        x_q = RegRst(comb.x_d, input.rst_ni, input.P1);
-}
-----
-
-[source, rust]
-----
-#[out]
-fn MyModule() {
-    x_o = sig.x_q;
-    y_o = comb.y;
+    fn core() {
+        //Process
+        let x_q: RegRst<type_1> = RegRst(x_d, rst_ni, /*TODO*/);
+        //Channel function
+        let x_d = CFunc1(x_q);
+        //Output
+        x_o(x_q);
+        y_o(CFunc2(input.a_i));
+    }
 }
 ----

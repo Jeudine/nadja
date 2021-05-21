@@ -111,37 +111,35 @@ impl<'a> ModuleAst<'a> {
         assert!(
             item.sig.ident.to_string().eq(&String::from("core")),
             "unexpected function in module definition"
-            );
+        );
 
         item.block.stmts.iter().for_each(|x| match x {
             syn::Stmt::Semi(x, _) => match x {
                 syn::Expr::Assign(x) => match &*x.right {
                     syn::Expr::Path(p) => self.push_out(x),
                     syn::Expr::Call(p) => match &*p.func {
-                        syn::Expr::Path(p) =>
+                        syn::Expr::Path(p) => {
                             match p.path.segments.last().unwrap().ident.to_string().as_str() {
                                 "RegRst" => self.push_reg(x),
-                                "Reg" => {/*TODO*/}
+                                "Reg" => { /*TODO*/ }
                                 _ => self.push_comb(x),
                             }
+                        }
                         _ => panic!("function identifier expected"),
-                    }
+                    },
                     _ => panic!("unexpected expression"),
-                }
+                },
                 _ => panic!("assignment expression expected"),
             },
             _ => panic!("expression with trailing semicolon expected"),
         });
     }
 
-    fn push_out(&mut self, expr: &'a syn::ExprAssign) {
-    }
+    fn push_out(&mut self, expr: &'a syn::ExprAssign) {}
 
-    fn push_reg(&mut self, expr: &'a syn::ExprAssign) {
-    }
+    fn push_reg(&mut self, expr: &'a syn::ExprAssign) {}
 
-    fn push_comb(&mut self, expr: &'a syn::ExprAssign) {
-    }
+    fn push_comb(&mut self, expr: &'a syn::ExprAssign) {}
 }
 #[proc_macro_attribute]
 pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
