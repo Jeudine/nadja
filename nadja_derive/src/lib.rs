@@ -65,6 +65,10 @@ struct CombNode<'a> {
     channel: &'a syn::Expr,
     args: Vec<syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
 }
+/*
+struct AssiNode<'a> {
+}
+*/
 
 #[derive(Default)]
 struct ModuleAst<'a> {
@@ -73,6 +77,7 @@ struct ModuleAst<'a> {
     outs: Vec<IoNode<'a>>,
     combs: Vec<CombNode<'a>>,
     procs: Vec<ProcNode<'a>>,
+    //out_fn: Vec<AssiNode<'a>>,
 }
 
 impl<'a> ModuleAst<'a> {
@@ -81,9 +86,9 @@ impl<'a> ModuleAst<'a> {
             item.ident.to_string().eq(&String::from("io")),
             "unexpected struct in module definition"
         );
-        match item.fields {
-            syn::Fields::Named(ref x) => x.named.iter().for_each(|x| match x.ty {
-                syn::Type::Path(ref p) => {
+        match &item.fields {
+            syn::Fields::Named(x) => x.named.iter().for_each(|x| match &x.ty {
+                syn::Type::Path(p) => {
                     match p.path.segments.last().unwrap().ident.to_string().as_str() {
                         "In" => self.ins.push(IoNode {
                             name: x.ident.as_ref().unwrap(),
@@ -93,28 +98,49 @@ impl<'a> ModuleAst<'a> {
                             name: x.ident.as_ref().unwrap(),
                             ty: &x.ty,
                         }),
-                        _ => panic!("unexpected path"),
+                        _ => panic!("unexpected expression"),
                     }
                 }
-                _ => panic!("unexpected type"),
+                _ => panic!("`In<T>` or `Out<T>` expected"),
             }),
             _ => panic!("unexpected field"),
         };
     }
 
-    fn push_comb_out(&mut self, item: &'a syn::ItemFn) {
-        let fn_id = item.sig.ident.to_string();
-        let comb_id = String::from("comb");
+    fn push_core(&mut self, item: &'a syn::ItemFn) {
         assert!(
-            fn_id.eq(&comb_id) | fn_id.eq(&String::from("out")),
+            item.sig.ident.to_string().eq(&String::from("core")),
             "unexpected function in module definition"
-        );
+            );
 
-        if fn_id.eq(&comb_id) {
+        item.block.stmts.iter().for_each(|x| match x {
+            syn::Stmt::Semi(x, _) => match x {
+                syn::Expr::Assign(x) => match &*x.right {
+                    syn::Expr::Path(p) => self.push_out(x),
+                    syn::Expr::Call(p) => match &*p.func {
+                        syn::Expr::Path(p) =>
+                            match p.path.segments.last().unwrap().ident.to_string().as_str() {
+                                "RegRst" => self.push_reg(x),
+                                "Reg" => {/*TODO*/}
+                                _ => self.push_comb(x),
+                            }
+                        _ => panic!("function identifier expected"),
+                    }
+                    _ => panic!("unexpected expression"),
+                }
+                _ => panic!("assignment expression expected"),
+            },
+            _ => panic!("expression with trailing semicolon expected"),
+        });
+    }
 
-        } else {
+    fn push_out(&mut self, expr: &'a syn::ExprAssign) {
+    }
 
-        }
+    fn push_reg(&mut self, expr: &'a syn::ExprAssign) {
+    }
+
+    fn push_comb(&mut self, expr: &'a syn::ExprAssign) {
     }
 }
 #[proc_macro_attribute]
@@ -128,9 +154,7 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
         match x {
             syn::Item::Const(x) => m.consts.push(x),
             syn::Item::Struct(x) => m.push_io(x),
-            syn::Item::Fn(x) => m.push_comb_out(x),
-            //procs
-            syn::Item::Static(x) => {} //TODO,
+            syn::Item::Fn(x) => m.push_core(x),
             _ => panic!("unexpected item in module definition"),
         };
         m
@@ -161,8 +185,16 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
             struct Proc {
             }
 
-            struct Output {
-                #(#outs_name: #outs_ty,)*
+            struct Output<'a> {
+                #(#outs_name: &'a #outs_ty,)*
+            }
+            impl<'a> Output<'a> {
+                /*
+                   fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
+                   Self {
+                   }
+                   }
+                   */
             }
         }
     };

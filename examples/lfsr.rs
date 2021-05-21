@@ -39,14 +39,9 @@ mod lfsr {
         state_o: Out<VLogic<WIDTH>>,
     }
 
-    fn comb() {
+    fn core() {
+        state_q = RegRst(state_d, rst_ni, INIT_STATE);
         state_d = CFunc(state_q);
-    }
-
-    //Process
-    static state_q: VLogic<WIDTH> = RegRst(state_d, rst_ni, INIT_STATE);
-
-    fn out() {
         state_o = state_q;
     }
 }
