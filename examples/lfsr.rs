@@ -41,7 +41,7 @@ mod lfsr {
 
     fn core() {
         let state_q: RegRst<VLogic<WIDTH>> = RegRst(state_d, rst_ni, INIT_STATE);
-        let state_d = CFunc(state_q);
+        let state_d = CFunc { state_i: state_q };
         state_o(state_q);
     }
 }

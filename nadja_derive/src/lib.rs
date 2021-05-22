@@ -33,6 +33,7 @@ pub fn channel(_: TokenStream, item: TokenStream) -> TokenStream {
     let body = &func.block;
 
     let gen = quote! {
+        //TODO remove derive(new)
         #[derive(new)]
         pub struct #channel_name<'a> {
             #(#inputs_name: &'a dyn Channel<#inputs_type>,)*
@@ -115,7 +116,11 @@ impl<'a> ModuleAst<'a> {
 
         item.block.stmts.iter().for_each(|x| match x {
             syn::Stmt::Semi(x, _) => match x {
-                syn::Expr::Assign(x) => match &*x.right {
+                syn::Expr::Call(x) => self.push_out(x),
+                _ => panic!("unexpected expression"),
+            }
+                /*match x {
+                syn::Expr::Let(x) => match &*x.expr {
                     syn::Expr::Path(p) => self.push_out(x),
                     syn::Expr::Call(p) => match &*p.func {
                         syn::Expr::Path(p) => {
@@ -129,17 +134,24 @@ impl<'a> ModuleAst<'a> {
                     },
                     _ => panic!("unexpected expression"),
                 },
+                syn::Expr::Call(x) => (),
                 _ => panic!("assignment expression expected"),
+            },
+        */
+            syn::Stmt::Local(x) => match &*x.init.as_ref().unwrap().1 {
+                syn::Expr::Call(_) => self.push_reg(x),
+                syn::Expr::Struct(_) => self.push_comb(x),
+                _ => panic!("unexpected expression"),
             },
             _ => panic!("expression with trailing semicolon expected"),
         });
     }
 
-    fn push_out(&mut self, expr: &'a syn::ExprAssign) {}
+    fn push_out(&mut self, expr: &'a syn::ExprCall) {}
 
-    fn push_reg(&mut self, expr: &'a syn::ExprAssign) {}
+    fn push_reg(&mut self, expr: &'a syn::Local) {}
 
-    fn push_comb(&mut self, expr: &'a syn::ExprAssign) {}
+    fn push_comb(&mut self, expr: &'a syn::Local) {}
 }
 #[proc_macro_attribute]
 pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
