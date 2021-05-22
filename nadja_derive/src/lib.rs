@@ -118,29 +118,29 @@ impl<'a> ModuleAst<'a> {
             syn::Stmt::Semi(x, _) => match x {
                 syn::Expr::Call(x) => self.push_out(x),
                 _ => panic!("unexpected expression"),
-            }
-                /*match x {
-                syn::Expr::Let(x) => match &*x.expr {
-                    syn::Expr::Path(p) => self.push_out(x),
-                    syn::Expr::Call(p) => match &*p.func {
-                        syn::Expr::Path(p) => {
-                            match p.path.segments.last().unwrap().ident.to_string().as_str() {
-                                "RegRst" => self.push_reg(x),
-                                "Reg" => { /*TODO*/ }
-                                _ => self.push_comb(x),
-                            }
-                        }
-                        _ => panic!("function identifier expected"),
-                    },
-                    _ => panic!("unexpected expression"),
-                },
-                syn::Expr::Call(x) => (),
-                _ => panic!("assignment expression expected"),
             },
-        */
+            /*match x {
+                    syn::Expr::Let(x) => match &*x.expr {
+                        syn::Expr::Path(p) => self.push_out(x),
+                        syn::Expr::Call(p) => match &*p.func {
+                            syn::Expr::Path(p) => {
+                                match p.path.segments.last().unwrap().ident.to_string().as_str() {
+                                    "RegRst" => self.push_reg(x),
+                                    "Reg" => { /*TODO*/ }
+                                    _ => self.push_comb(x),
+                                }
+                            }
+                            _ => panic!("function identifier expected"),
+                        },
+                        _ => panic!("unexpected expression"),
+                    },
+                    syn::Expr::Call(x) => (),
+                    _ => panic!("assignment expression expected"),
+                },
+            */
             syn::Stmt::Local(x) => match &*x.init.as_ref().unwrap().1 {
-                syn::Expr::Call(_) => self.push_reg(x),
-                syn::Expr::Struct(_) => self.push_comb(x),
+                syn::Expr::Call(p) => self.push_reg(p, &x.pat),
+                syn::Expr::Struct(p) => self.push_comb(p, &x.pat),
                 _ => panic!("unexpected expression"),
             },
             _ => panic!("expression with trailing semicolon expected"),
@@ -149,9 +149,20 @@ impl<'a> ModuleAst<'a> {
 
     fn push_out(&mut self, expr: &'a syn::ExprCall) {}
 
-    fn push_reg(&mut self, expr: &'a syn::Local) {}
+    fn push_reg(&mut self, reg: &'a syn::ExprCall, sig: &'a syn::Pat) {
+        match &*reg.func {
+            syn::Expr::Path(x) => {
+                match x.path.segments.last().unwrap().ident.to_string().as_str() {
+                    "RegRst" => {}
+                    "Reg" => { /*TODO*/ }
+                    _ => panic!("`Reg` or `RegRst` expected"),
+                }
+            }
+            _ => panic!("function identifier expected"),
+        };
+    }
 
-    fn push_comb(&mut self, expr: &'a syn::Local) {}
+    fn push_comb(&mut self, comb: &'a syn::ExprStruct, wire: &'a syn::Pat) {}
 }
 #[proc_macro_attribute]
 pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
