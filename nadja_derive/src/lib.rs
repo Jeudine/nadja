@@ -119,25 +119,6 @@ impl<'a> ModuleAst<'a> {
                 syn::Expr::Call(x) => self.push_out(x),
                 _ => panic!("unexpected expression"),
             },
-            /*match x {
-                    syn::Expr::Let(x) => match &*x.expr {
-                        syn::Expr::Path(p) => self.push_out(x),
-                        syn::Expr::Call(p) => match &*p.func {
-                            syn::Expr::Path(p) => {
-                                match p.path.segments.last().unwrap().ident.to_string().as_str() {
-                                    "RegRst" => self.push_reg(x),
-                                    "Reg" => { /*TODO*/ }
-                                    _ => self.push_comb(x),
-                                }
-                            }
-                            _ => panic!("function identifier expected"),
-                        },
-                        _ => panic!("unexpected expression"),
-                    },
-                    syn::Expr::Call(x) => (),
-                    _ => panic!("assignment expression expected"),
-                },
-            */
             syn::Stmt::Local(x) => match &*x.init.as_ref().unwrap().1 {
                 syn::Expr::Call(p) => self.push_reg(p, &x.pat),
                 syn::Expr::Struct(p) => self.push_comb(p, &x.pat),
@@ -150,6 +131,14 @@ impl<'a> ModuleAst<'a> {
     fn push_out(&mut self, expr: &'a syn::ExprCall) {}
 
     fn push_reg(&mut self, reg: &'a syn::ExprCall, sig: &'a syn::Pat) {
+        let (ty, name) = match sig {
+            syn::Pat::Type(x) => (&*x.ty, match &*x.pat {
+                syn::Pat::Ident(x) => &x.ident,
+                _ => panic!("unexpected identifier"),
+
+            }),
+            _ => panic!("type ascription expected"),
+        };
         match &*reg.func {
             syn::Expr::Path(x) => {
                 match x.path.segments.last().unwrap().ident.to_string().as_str() {
