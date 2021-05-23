@@ -57,14 +57,13 @@ struct IoNode<'a> {
 struct ProcNode<'a> {
     name: &'a syn::Ident,
     ty: &'a syn::Type,
-    proc: &'a syn::Expr,
-    args: Vec<syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
+    proc: &'a syn::Ident,
+    args: syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>,
 }
 
 struct CombNode<'a> {
     name: &'a syn::Ident,
-    channel: &'a syn::Expr,
-    args: Vec<syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
+    channel: &'a syn::ExprStruct,
 }
 /*
 struct AssiNode<'a> {
@@ -74,6 +73,7 @@ struct AssiNode<'a> {
 #[derive(Default)]
 struct ModuleAst<'a> {
     consts: Vec<&'a syn::ItemConst>,
+    uses: Vec<&'a syn::ItemUse>,
     ins: Vec<IoNode<'a>>,
     outs: Vec<IoNode<'a>>,
     combs: Vec<CombNode<'a>>,
@@ -120,7 +120,7 @@ impl<'a> ModuleAst<'a> {
                 _ => panic!("unexpected expression"),
             },
             syn::Stmt::Local(x) => match &*x.init.as_ref().unwrap().1 {
-                syn::Expr::Call(p) => self.push_reg(p, &x.pat),
+                syn::Expr::Call(p) => self.push_proc(p, &x.pat),
                 syn::Expr::Struct(p) => self.push_comb(p, &x.pat),
                 _ => panic!("unexpected expression"),
             },
@@ -130,28 +130,61 @@ impl<'a> ModuleAst<'a> {
 
     fn push_out(&mut self, expr: &'a syn::ExprCall) {}
 
-    fn push_reg(&mut self, reg: &'a syn::ExprCall, sig: &'a syn::Pat) {
+    fn push_proc(&mut self, reg: &'a syn::ExprCall, sig: &'a syn::Pat) {
         let (ty, name) = match sig {
-            syn::Pat::Type(x) => (&*x.ty, match &*x.pat {
-                syn::Pat::Ident(x) => &x.ident,
-                _ => panic!("unexpected identifier"),
-
-            }),
+            syn::Pat::Type(x) => (
+                &*x.ty,
+                match &*x.pat {
+                    syn::Pat::Ident(x) => &x.ident,
+                    _ => panic!("unexpected identifier"),
+                },
+            ),
             _ => panic!("type ascription expected"),
         };
-        match &*reg.func {
-            syn::Expr::Path(x) => {
-                match x.path.segments.last().unwrap().ident.to_string().as_str() {
-                    "RegRst" => {}
-                    "Reg" => { /*TODO*/ }
-                    _ => panic!("`Reg` or `RegRst` expected"),
-                }
-            }
-            _ => panic!("function identifier expected"),
-        };
+
+        let (proc, args) = (
+            match &*reg.func {
+                syn::Expr::Path(x) => &x.path.segments.last().unwrap().ident,
+                _ => panic!("function identifier expected"),
+            },
+            {
+                let mut args = reg.args.clone();
+                args.push(syn::Expr::Path(syn::ExprPath {
+                    attrs: Vec::new(),
+                    qself: None,
+                    path: syn::Path {
+                        leading_colon: None,
+                        segments: {
+                            let mut path = syn::punctuated::Punctuated::new();
+                            path.push(syn::PathSegment {
+                                ident: name.clone(),
+                                arguments: syn::PathArguments::None,
+                            });
+                            path
+                        },
+                    },
+                }));
+                args
+            },
+        );
+
+        self.procs.push(ProcNode {
+            ty: ty,
+            name: name,
+            proc: proc,
+            args: args,
+        });
     }
 
-    fn push_comb(&mut self, comb: &'a syn::ExprStruct, wire: &'a syn::Pat) {}
+    fn push_comb(&mut self, channel: &'a syn::ExprStruct, wire: &'a syn::Pat) {
+        self.combs.push(CombNode {
+            name: match wire {
+                syn::Pat::Ident(x) => &x.ident,
+                _ => panic!("unexpected identifier"),
+            },
+            channel: channel,
+        });
+    }
 }
 #[proc_macro_attribute]
 pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
@@ -163,6 +196,7 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
     let mod_ast = content.iter().fold(ModuleAst::default(), |mut m, x| {
         match x {
             syn::Item::Const(x) => m.consts.push(x),
+            syn::Item::Use(x) => m.uses.push(x),
             syn::Item::Struct(x) => m.push_io(x),
             syn::Item::Fn(x) => m.push_core(x),
             _ => panic!("unexpected item in module definition"),
@@ -170,10 +204,18 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
         m
     });
     let consts = &mod_ast.consts;
-    let ins_name = mod_ast.ins.iter().map(|x| x.name);
-    let ins_ty = mod_ast.ins.iter().map(|x| x.ty);
-    let outs_name = mod_ast.outs.iter().map(|x| x.name);
-    let outs_ty = mod_ast.outs.iter().map(|x| x.ty);
+    let uses = &mod_ast.uses;
+    let ins_name = mod_ast.ins.iter().map(|x| x.name).collect::<Vec<_>>();
+    let ins_ty = mod_ast.ins.iter().map(|x| x.ty).collect::<Vec<_>>();
+    let outs_name = mod_ast.outs.iter().map(|x| x.name).collect::<Vec<_>>();
+    let outs_ty = mod_ast.outs.iter().map(|x| x.ty).collect::<Vec<_>>();
+    let sigs_name = mod_ast.procs.iter().map(|x| x.name).collect::<Vec<_>>();
+    let sigs_ty = mod_ast.procs.iter().map(|x| x.ty).collect::<Vec<_>>();
+    let procs_proc = mod_ast.procs.iter().map(|x| x.proc).collect::<Vec<_>>();
+    let procs_args = mod_ast.procs.iter().map(|x| &x.args).collect::<Vec<_>>();
+    let combs_name = mod_ast.combs.iter().map(|x| x.name).collect::<Vec<_>>();
+    let combs_chann_name = mod_ast.combs.iter().map(|x| &x.channel.path).collect::<Vec<_>>();
+    let combs_chann = mod_ast.combs.iter().map(|x| &x.channel).collect::<Vec<_>>();
 
     let gen = quote! {
         #mod_vis mod #mod_name {
@@ -181,19 +223,48 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
             use nadja::process::{Clk, RegRst, Rst};
             use nadja::{Channel, In, Out, Signal, Simulator, Wire, Param};
             #(#consts)*
+            #(#uses)*
             //TODO: visibility of each struct
             struct Input<'a> {
                 #(#ins_name: &'a #ins_ty,)*
             }
 
+            #[derive(Default)]
             struct Sig {
+                #(#sigs_name: Signal<#sigs_ty>,)*
             }
 
-            struct Comb {
+            struct Comb<'a> {
+                #(#combs_name: #combs_chann_name<'a>,)*
             }
 
-            struct Proc {
+            impl<'a> Comb<'a> {
+                #[allow(unused_variables)]
+                fn init(input: &'a Input, sig: &'a Sig) -> Self {
+                    #(let #ins_name = input.#ins_name;)*
+                    #(let #sigs_name = &sig.#sigs_name;)*
+                    Self {
+                        #(#combs_name: #combs_chann,)*
+                    }
+                }
             }
+
+            struct Proc<'a> {
+                #(#sigs_name: #procs_proc<'a, #sigs_ty>,)*
+            }
+
+            impl<'a> Proc<'a> {
+                #[allow(unused_variables)]
+                fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) {
+                    #(let #ins_name = input.#ins_name;)*
+                    #(let #sigs_name = &sig.#sigs_name;)*
+                    #(let #combs_name = &comb.#combs_name;)*
+                    Self {
+                        #(#sigs_name: #procs_proc::new(#procs_args),)*
+                    }
+                }
+            }
+
 
             struct Output<'a> {
                 #(#outs_name: &'a #outs_ty,)*
@@ -206,6 +277,11 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
                    }
                    */
             }
+            /*
+               fn Test() {
+               let x = T(#(#procs_args)*);
+               }
+               */
         }
     };
     gen.into()

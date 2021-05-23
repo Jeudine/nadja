@@ -72,7 +72,7 @@ mod my_module {
 
     fn core() {
         //Process
-        let x_q: RegRst<ty_o1> = RegRst(x_d, rst_ni, /*TODO*/);
+        let x_q: ty_o1 = RegRst(x_d, rst_ni, /*TODO*/);
         //Channel function
         let x_d = CFunc1(x_q);
         //Output

@@ -19,9 +19,9 @@ impl<'a, T: TValue> Process<'a> for Reg<'a, T> {
 #[derive(new)]
 pub struct RegRst<'a, T: TValue> {
     d: &'a dyn Channel<T>,
-    q: &'a Signal<T>,
     nrst: &'a dyn Channel<bool>,
     init_state: &'a T,
+    q: &'a Signal<T>,
 }
 
 impl<'a, T: TValue> Process<'a> for RegRst<'a, T> {

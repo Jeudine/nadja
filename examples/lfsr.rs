@@ -29,8 +29,7 @@ mod lfsr {
         WIDTH_param: usize,
     }
     */
-
-    const WIDTH: usize = 20;
+    use super::{WIDTH, CFunc};
 
     struct io {
         //Input
@@ -40,7 +39,7 @@ mod lfsr {
     }
 
     fn core() {
-        let state_q: RegRst<VLogic<WIDTH>> = RegRst(state_d, rst_ni, INIT_STATE);
+        let state_q: VLogic<WIDTH> = RegRst(state_d, rst_ni, INIT_STATE);
         let state_d = CFunc { state_i: state_q };
         state_o(state_q);
     }
