@@ -24,55 +24,22 @@ fn CFunc(state_i: VLogic<WIDTH>) -> VLogic<WIDTH> {
 
 #[seq]
 mod lfsr {
-    /*
-    struct param {
-        WIDTH_param: usize,
-    }
-    */
     use super::{WIDTH, CFunc};
 
     struct io {
-        //Input
         rst_ni: In<bool>,
-        //Output
         state_o: Out<VLogic<WIDTH>>,
     }
 
     fn core() {
-        let state_q: VLogic<WIDTH> = RegRst(state_d, rst_ni, INIT_STATE);
+        let state_q: VLogic<WIDTH> = Reg(state_d);//, rst_ni, INIT_STATE);
         let state_d = CFunc { state_i: state_q };
-        state_o(state_q);
+        Output {
+            state_o: state_q,
+        };
     }
 }
 
-/*
-#[module]
-struct LFSR {
-//Parameter
-INIT_STATE: Param<VLogic<WIDTH>>,
-//Input
-rst_ni: Input<bool>,
-//Output
-state_o: Output<VLogic<WIDTH>>,
-//Process
-state_q: RegRst<VLogic<WIDTH>>,
-}
-
-#[comb]
-fn LFSR() {
-state_d = CFunc(i_sig.state_q);
-}
-
-#[proc]
-fn LFSR() {
-state_q = RegRst(&comb.state_d, &sig.state_q, input.rst_ni, &input.INIT_STATE);
-}
-
-#[out]
-fn LFSR() {
-state_o = sig.state_q;
-}
-*/
 fn main() {
     /*
     //parameter

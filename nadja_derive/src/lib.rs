@@ -65,10 +65,6 @@ struct CombNode<'a> {
     name: &'a syn::Ident,
     channel: &'a syn::ExprStruct,
 }
-/*
-struct AssiNode<'a> {
-}
-*/
 
 #[derive(Default)]
 struct ModuleAst<'a> {
@@ -78,7 +74,7 @@ struct ModuleAst<'a> {
     outs: Vec<IoNode<'a>>,
     combs: Vec<CombNode<'a>>,
     procs: Vec<ProcNode<'a>>,
-    //out_fn: Vec<AssiNode<'a>>,
+    output: Option<&'a syn::ExprStruct>,
 }
 
 impl<'a> ModuleAst<'a> {
@@ -116,7 +112,20 @@ impl<'a> ModuleAst<'a> {
 
         item.block.stmts.iter().for_each(|x| match x {
             syn::Stmt::Semi(x, _) => match x {
-                syn::Expr::Call(x) => self.push_out(x),
+                syn::Expr::Struct(x) => {
+                    let path = &x.path.segments;
+                    assert!(
+                        (path.len() == 1)
+                            & path
+                                .last()
+                                .unwrap()
+                                .ident
+                                .to_string()
+                                .eq(&String::from("Output")),
+                        "unexpected struct"
+                    );
+                    self.output = Option::Some(x);
+                }
                 _ => panic!("unexpected expression"),
             },
             syn::Stmt::Local(x) => match &*x.init.as_ref().unwrap().1 {
@@ -127,8 +136,6 @@ impl<'a> ModuleAst<'a> {
             _ => panic!("expression with trailing semicolon expected"),
         });
     }
-
-    fn push_out(&mut self, expr: &'a syn::ExprCall) {}
 
     fn push_proc(&mut self, reg: &'a syn::ExprCall, sig: &'a syn::Pat) {
         let (ty, name) = match sig {
@@ -214,13 +221,18 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
     let procs_proc = mod_ast.procs.iter().map(|x| x.proc).collect::<Vec<_>>();
     let procs_args = mod_ast.procs.iter().map(|x| &x.args).collect::<Vec<_>>();
     let combs_name = mod_ast.combs.iter().map(|x| x.name).collect::<Vec<_>>();
-    let combs_chann_name = mod_ast.combs.iter().map(|x| &x.channel.path).collect::<Vec<_>>();
+    let combs_chann_name = mod_ast
+        .combs
+        .iter()
+        .map(|x| &x.channel.path)
+        .collect::<Vec<_>>();
     let combs_chann = mod_ast.combs.iter().map(|x| &x.channel).collect::<Vec<_>>();
+    let output = mod_ast.output.unwrap();
 
     let gen = quote! {
         #mod_vis mod #mod_name {
             use nadja::logic::{concat, Logic, VLogic};
-            use nadja::process::{Clk, RegRst, Rst};
+            use nadja::process::{Clk, Reg, RegRst, Rst};
             use nadja::{Channel, In, Out, Signal, Simulator, Wire, Param};
             #(#consts)*
             #(#uses)*
@@ -255,7 +267,7 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
 
             impl<'a> Proc<'a> {
                 #[allow(unused_variables)]
-                fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) {
+                fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
                     #(let #ins_name = input.#ins_name;)*
                     #(let #sigs_name = &sig.#sigs_name;)*
                     #(let #combs_name = &comb.#combs_name;)*
@@ -265,23 +277,19 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
-
             struct Output<'a> {
                 #(#outs_name: &'a #outs_ty,)*
             }
+
             impl<'a> Output<'a> {
-                /*
-                   fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
-                   Self {
-                   }
-                   }
-                   */
+                #[allow(unused_variables)]
+                fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
+                    #(let #ins_name = input.#ins_name;)*
+                    #(let #sigs_name = &sig.#sigs_name;)*
+                    #(let #combs_name = &comb.#combs_name;)*
+                    #output
+                }
             }
-            /*
-               fn Test() {
-               let x = T(#(#procs_args)*);
-               }
-               */
         }
     };
     gen.into()

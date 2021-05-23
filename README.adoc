@@ -75,9 +75,12 @@ mod my_module {
         let x_q: ty_o1 = RegRst(x_d, rst_ni, /*TODO*/);
         //Channel function
         let x_d = CFunc1(x_q);
+        let y = CFunc2(input.a_i);
         //Output
-        x_o(x_q);
-        y_o(CFunc2(input.a_i));
+        Output {
+            x_o: x_q,
+            y_o: y,
+        };
     }
 }
 ----
