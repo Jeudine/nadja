@@ -25,14 +25,15 @@ fn CFunc(state_i: VLogic<WIDTH>) -> VLogic<WIDTH> {
 #[seq]
 mod lfsr {
     use super::{WIDTH, CFunc};
+    const INIT_STATE: usize = 1;
 
     struct io {
-        rst_ni: In<bool>,
+        rst_ni: In<Logic>,
         state_o: Out<VLogic<WIDTH>>,
     }
 
-    fn core() {
-        let state_q: VLogic<WIDTH> = Reg(state_d);//, rst_ni, INIT_STATE);
+    fn core(){
+        let state_q: WIDTH = FF(state_d, rst_ni, INIT_STATE);
         let state_d = CFunc { state_i: state_q };
         Output {
             state_o: state_q,

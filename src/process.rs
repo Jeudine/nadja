@@ -1,7 +1,7 @@
 pub mod clock;
 pub use clock::Clk;
 pub mod register;
-pub use register::{Reg, RegRst};
+pub use register::{Reg, RegRst, FF};
 pub mod reset;
 pub use reset::Rst;
 

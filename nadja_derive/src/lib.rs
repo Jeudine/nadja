@@ -74,6 +74,7 @@ struct ModuleAst<'a> {
     outs: Vec<IoNode<'a>>,
     combs: Vec<CombNode<'a>>,
     procs: Vec<ProcNode<'a>>,
+    ffs: Vec<ProcNode<'a>>,
     output: Option<&'a syn::ExprStruct>,
 }
 
@@ -174,13 +175,18 @@ impl<'a> ModuleAst<'a> {
                 args
             },
         );
+        let node = ProcNode {
+                ty: ty,
+                name: name,
+                proc: proc,
+                args: args,
+        };
 
-        self.procs.push(ProcNode {
-            ty: ty,
-            name: name,
-            proc: proc,
-            args: args,
-        });
+        if proc.to_string().eq(&String::from("FF")) {
+            self.ffs.push(node);
+        } else {
+            self.procs.push(node);
+        }
     }
 
     fn push_comb(&mut self, channel: &'a syn::ExprStruct, wire: &'a syn::Pat) {
@@ -216,8 +222,8 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
     let ins_ty = mod_ast.ins.iter().map(|x| x.ty).collect::<Vec<_>>();
     let outs_name = mod_ast.outs.iter().map(|x| x.name).collect::<Vec<_>>();
     let outs_ty = mod_ast.outs.iter().map(|x| x.ty).collect::<Vec<_>>();
-    let sigs_name = mod_ast.procs.iter().map(|x| x.name).collect::<Vec<_>>();
-    let sigs_ty = mod_ast.procs.iter().map(|x| x.ty).collect::<Vec<_>>();
+    let procs_name = mod_ast.procs.iter().map(|x| x.name).collect::<Vec<_>>();
+    let procs_ty = mod_ast.procs.iter().map(|x| x.ty).collect::<Vec<_>>();
     let procs_proc = mod_ast.procs.iter().map(|x| x.proc).collect::<Vec<_>>();
     let procs_args = mod_ast.procs.iter().map(|x| &x.args).collect::<Vec<_>>();
     let combs_name = mod_ast.combs.iter().map(|x| x.name).collect::<Vec<_>>();
@@ -228,11 +234,16 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
         .collect::<Vec<_>>();
     let combs_chann = mod_ast.combs.iter().map(|x| &x.channel).collect::<Vec<_>>();
     let output = mod_ast.output.unwrap();
+    let ffs_name = mod_ast.ffs.iter().map(|x| x.name).collect::<Vec<_>>();
+    let ffs_ty = mod_ast.ffs.iter().map(|x| x.ty).collect::<Vec<_>>();
+    let ffs_proc = mod_ast.ffs.iter().map(|x| x.proc).collect::<Vec<_>>();
+    let ffs_args = mod_ast.ffs.iter().map(|x| &x.args).collect::<Vec<_>>();
 
     let gen = quote! {
         #mod_vis mod #mod_name {
             use nadja::logic::{concat, Logic, VLogic};
-            use nadja::process::{Clk, Reg, RegRst, Rst};
+            use nadja::logic::Logic::{Logic0, Logic1};
+            use nadja::process::{Clk, Reg, RegRst, Rst, FF};
             use nadja::{Channel, In, Out, Signal, Simulator, Wire, Param};
             #(#consts)*
             #(#uses)*
@@ -243,7 +254,8 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
 
             #[derive(Default)]
             struct Sig {
-                #(#sigs_name: Signal<#sigs_ty>,)*
+                #(#procs_name: Signal<#procs_ty>,)*
+                #(#ffs_name: Signal<VLogic<#ffs_ty>>,)*
             }
 
             struct Comb<'a> {
@@ -254,7 +266,8 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
                 #[allow(unused_variables)]
                 fn init(input: &'a Input, sig: &'a Sig) -> Self {
                     #(let #ins_name = input.#ins_name;)*
-                    #(let #sigs_name = &sig.#sigs_name;)*
+                    #(let #procs_name = &sig.#procs_name;)*
+                    #(let #ffs_name = &sig.#ffs_name;)*
                     Self {
                         #(#combs_name: #combs_chann,)*
                     }
@@ -262,17 +275,20 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
             }
 
             struct Proc<'a> {
-                #(#sigs_name: #procs_proc<'a, #sigs_ty>,)*
+                #(#procs_name: #procs_proc<'a, #procs_ty>,)*
+                #(#ffs_name: #ffs_proc<'a, #ffs_ty>,)*
             }
 
             impl<'a> Proc<'a> {
                 #[allow(unused_variables)]
                 fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
                     #(let #ins_name = input.#ins_name;)*
-                    #(let #sigs_name = &sig.#sigs_name;)*
+                    #(let #procs_name = &sig.#procs_name;)*
+                    #(let #ffs_name = &sig.#ffs_name;)*
                     #(let #combs_name = &comb.#combs_name;)*
                     Self {
-                        #(#sigs_name: #procs_proc::new(#procs_args),)*
+                        #(#procs_name: #procs_proc::new(#procs_args),)*
+                        #(#ffs_name: #ffs_proc::new(#ffs_args),)*
                     }
                 }
             }
@@ -285,7 +301,8 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
                 #[allow(unused_variables)]
                 fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
                     #(let #ins_name = input.#ins_name;)*
-                    #(let #sigs_name = &sig.#sigs_name;)*
+                    #(let #procs_name = &sig.#procs_name;)*
+                    #(let #ffs_name = &sig.#ffs_name;)*
                     #(let #combs_name = &comb.#combs_name;)*
                     #output
                 }
