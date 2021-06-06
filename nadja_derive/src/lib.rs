@@ -75,7 +75,7 @@ struct ModuleAst<'a> {
     combs: Vec<CombNode<'a>>,
     procs: Vec<ProcNode<'a>>,
     ffs: Vec<ProcNode<'a>>,
-    output: Option<&'a syn::ExprStruct>,
+    output: syn::punctuated::Punctuated<syn::FieldValue, syn::token::Comma>,
 }
 
 impl<'a> ModuleAst<'a> {
@@ -125,7 +125,7 @@ impl<'a> ModuleAst<'a> {
                                 .eq(&String::from("Output")),
                         "unexpected struct"
                     );
-                    self.output = Option::Some(x);
+                    self.output = x.fields.clone();
                 }
                 _ => panic!("unexpected expression"),
             },
@@ -233,7 +233,7 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
         .map(|x| &x.channel.path)
         .collect::<Vec<_>>();
     let combs_chann = mod_ast.combs.iter().map(|x| &x.channel).collect::<Vec<_>>();
-    let output = mod_ast.output.unwrap();
+    let output = mod_ast.output;
     let ffs_name = mod_ast.ffs.iter().map(|x| x.name).collect::<Vec<_>>();
     let ffs_ty = mod_ast.ffs.iter().map(|x| x.ty).collect::<Vec<_>>();
     let ffs_proc = mod_ast.ffs.iter().map(|x| x.proc).collect::<Vec<_>>();
@@ -248,23 +248,23 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
             #(#consts)*
             #(#uses)*
             //TODO: visibility of each struct
-            struct Input<'a> {
-                #(#ins_name: &'a #ins_ty,)*
+            pub struct Input<'a> {
+                #(pub #ins_name: &'a #ins_ty,)*
             }
 
             #[derive(Default)]
-            struct Sig {
+            pub struct Sig {
                 #(#procs_name: Signal<#procs_ty>,)*
                 #(#ffs_name: Signal<VLogic<#ffs_ty>>,)*
             }
 
-            struct Comb<'a> {
+            pub struct Comb<'a> {
                 #(#combs_name: #combs_chann_name<'a>,)*
             }
 
             impl<'a> Comb<'a> {
                 #[allow(unused_variables)]
-                fn init(input: &'a Input, sig: &'a Sig) -> Self {
+                pub fn init(input: &'a Input, sig: &'a Sig) -> Self {
                     #(let #ins_name = input.#ins_name;)*
                     #(let #procs_name = &sig.#procs_name;)*
                     #(let #ffs_name = &sig.#ffs_name;)*
@@ -274,14 +274,14 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
-            struct Proc<'a> {
+            pub struct Proc<'a> {
                 #(#procs_name: #procs_proc<'a, #procs_ty>,)*
                 #(#ffs_name: #ffs_proc<'a, #ffs_ty>,)*
             }
 
             impl<'a> Proc<'a> {
                 #[allow(unused_variables)]
-                fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
+                pub fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
                     #(let #ins_name = input.#ins_name;)*
                     #(let #procs_name = &sig.#procs_name;)*
                     #(let #ffs_name = &sig.#ffs_name;)*
@@ -293,313 +293,45 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
                 }
             }
 
-            struct Output<'a> {
-                #(#outs_name: &'a #outs_ty,)*
+            pub struct Instance<'a> {
+                pub #(#outs_name: &'a #outs_ty,)*
+                pub _nadja_proc_: &'a Proc<'a>,
             }
 
-            impl<'a> Output<'a> {
+            impl<'a> Instance<'a> {
                 #[allow(unused_variables)]
-                fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
+                pub fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb, proc: &'a Proc) -> Self {
                     #(let #ins_name = input.#ins_name;)*
                     #(let #procs_name = &sig.#procs_name;)*
                     #(let #ffs_name = &sig.#ffs_name;)*
                     #(let #combs_name = &comb.#combs_name;)*
-                    #output
+                    Self {
+                        #output
+                        _nadja_proc_: proc,
+                    }
                 }
             }
         }
-    };
-    gen.into()
-}
-/*
-#[proc_macro_attribute]
-pub fn module(_: TokenStream, item: TokenStream) -> TokenStream {
-let struc = syn::parse_macro_input!(item as syn::ItemStruct);
-let module_name = &struc.ident;
-let sig_name = quote::format_ident!("{}Sig", module_name);
-let comb_name = quote::format_ident!("{}Comb", module_name);
-let i_name = quote::format_ident!("{}Input", module_name);
-let i_sig_name = quote::format_ident!("{}InputSig", module_name);
-let c_i_sig_name = quote::format_ident!("{}CombInputSig", ident);
-let o_name = quote::format_ident!("{}Output", module_name);
-let proc_name = quote::format_ident!("{}Proc", module_name);
-let m_name = quote::format_ident!("{}m", module_name);
-let attrs: ModuleParse = match struc.fields {
-syn::Fields::Named(ref p) => p.named.iter().fold(ModuleParse::default(), |mut m, x| {
-match x.ty {
-syn::Type::Path(ref p) => {
-let ps = p.path.segments.first().unwrap();
-match ps.ident.to_string().as_str() {
-"Param" => {
-m.params_type.push(
-match &ps.arguments {
-syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap(),
-_ => panic!("Error, `<` expected!"),
-});
-m.params_name.push(x.ident.as_ref().unwrap());
-},
-"Input" => {
-m.inputs_type.push(&x.ty);
-m.inputs_name.push(x.ident.as_ref().unwrap());
-},
-"Output" => {
-m.outputs_type.push(&x.ty);
-m.outputs_name.push(x.ident.as_ref().unwrap());
-},
-"RegRst" | "Reg" => {
-m.procs_type.push(
-match &ps.arguments {
-syn::PathArguments::AngleBracketed(p) => p.args.first().unwrap(),
-_ => panic!("Error, `<` expected!"),
-});
-m.procs_name.push(x.ident.as_ref().unwrap());
-m.procs_struc.push(&ps.ident);
-},
-
-_ => panic!("Error, unexpected field!"),
-};
-m
-}
-_ => panic!("Error, wrong type!"),
-}
-}
-),
-_ => panic!("Error, named field expected!"),
-};
-
-let params_type = &attrs.params_type;
-let params_name = &attrs.params_name;
-let inputs_type = &attrs.inputs_type;
-let inputs_name = &attrs.inputs_name;
-let outputs_type = &attrs.outputs_type;
-let outputs_name = &attrs.outputs_name;
-let procs_name = &attrs.procs_name;
-let procs_type = &attrs.procs_type;
-let procs_struc = &attrs.procs_struc;
-
-let gen = quote! {
-#[derive(Default)]
-pub struct #sig_name {
-#(#procs_name: Signal<#procs_type>,)*
-}
-
-pub struct #i_name<'a> {
-    #(#params_name: #params_type,)*
-    #(#inputs_name: &'a #inputs_type,)*
-}
-
-pub struct #i_sig_name<'a> {
-    #(#params_name: &'a #params_type,)*
-    #(#inputs_name: &'a #inputs_type,)*
-    #(#procs_name: &'a Signal<#procs_type>,)*
-}
-
-impl<'a> #i_sig_name<'a> {
-    fn new(input: &'a#i_name, sig: &'a#sig_name) -> Self {
-        Self {
-            #(#params_name: &input.#params_name,)*
-            #(#inputs_name: input.#inputs_name,)*
-            #(#procs_name: &sig.#procs_name,)*
-        }
-    }
-
-    fn toComb(&self) -> #c_i_sig_name {
-
-    }
-}
-
-pub struct #o_name<'a> {
-    #(pub #outputs_name: &'a #outputs_type,)*
-}
-
-pub struct #proc_name<'a> {
-    #(pub #procs_name: #procs_struc<'a, #procs_type>,)*
-}
-
-pub struct #module_name<'a> {
-    pub o: #o_name<'a>,
-    pub p: #proc_name<'a>,
-}
-
 #[macro_export]
-macro_rules! #module_name {
-    (
-        $i:ident {
-            $(
-                $fn:ident: $expr:expr
-             ),* $(,)*
-        }
-    ) => {
-        mashup! {
-            #m_name["sig" $i] = sig_ $i;
-            #m_name["input" $i] = input_ $i;
-            #m_name["i_sig" $i] = input_sig_ $i;
-            #m_name["comb" $i] = comb_ $i;
-        }
-        #m_name! {
-            let "sig" $i = #sig_name::default();
-            let "input" $i = #i_name {
-                $(
-                    $fn: $expr,
-                 )*
-            };
-            let "i_sig" $i = #i_sig_name::new(& "input" $i, & "sig" $i);
-            let "comb" $i = #comb_name::new(& "i_sig" $i);
-            let $i = #module_name {
-                o: #o_name::new(& "sig" $i, & "input" $i, & "comb" $i),
-                p: #proc_name::new(& "sig" $i, & "input" $i, & "comb" $i),
-            };
-        }
-    }
-}
-};
-gen.into()
-    }
-
-#[proc_macro_attribute]
-pub fn comb(_: TokenStream, item: TokenStream) -> TokenStream {
-    let func = syn::parse_macro_input!(item as syn::ItemFn);
-    let ident = &func.sig.ident;
-    let comb_name = quote::format_ident!("{}Comb", ident);
-    let i_sig_name = quote::format_ident!("{}InputSig", ident);
-    let c_i_sig_name = quote::format_ident!("{}CombInputSig", ident);
-    let p = CombParse::parse(&func.block.stmts);
-    let left = p.left;
-    let func = p.func;
-    let args = p.args;
-    //TODO: modify args
-    let gen = quote! {
-        pub struct #comb_name<'a> {
-            #(#left: #func<'a>,)*
-        }
-
-        impl <'a> #comb_name<'a> {
-            pub fn new(i_sig: &'a #i_sig_name) -> Self {
-                Self {
-                    #(#left: #func::new(#args),)*
+        macro_rules! #mod_name {
+            (
+                $instance:ident {
+                    $(
+                        $in:ident: $ext:expr
+                     ),* $(,)*
                 }
-            }
-        }
-        pub struct #c_i_sig_name<'a> {
-            #(#params_name: &'a #params_type,)*
-            #(#inputs_name: &'a #inputs_type,)*
-            #(#procs_name: &'a Signal<#procs_type>,)*
-            #(#left:
-              }
-              };
-              gen.into()
-              }
-
-#[proc_macro_attribute]
-              pub fn proc(_: TokenStream, item: TokenStream) -> TokenStream {
-                  let func = syn::parse_macro_input!(item as syn::ItemFn);
-                  let ident = &func.sig.ident;
-                  let proc_name = quote::format_ident!("{}Proc", ident);
-                  let comb_name = quote::format_ident!("{}Comb", ident);
-                  let sig_name = quote::format_ident!("{}Sig", ident);
-                  let i_name = quote::format_ident!("{}Input", ident);
-                  let p = CombParse::parse(&func.block.stmts);
-                  let left = p.left;
-                  let func = p.func;
-                  let args = p.args;
-                  let gen = quote! {
-                      impl <'a> #proc_name<'a> {
-                          pub fn new(sig: &'a #sig_name, input: &'a #i_name, comb: &'a #comb_name) -> Self {
-                              Self {
-                                  #(#left: #func::new(#args),)*
-                              }
-                          }
-                      }
-                  };
-                  gen.into()
-              }
-
-#[proc_macro_attribute]
-pub fn out(_: TokenStream, item: TokenStream) -> TokenStream {
-    let func = syn::parse_macro_input!(item as syn::ItemFn);
-    let ident = &func.sig.ident;
-    let comb_name = quote::format_ident!("{}Comb", ident);
-    let sig_name = quote::format_ident!("{}Sig", ident);
-    let i_name = quote::format_ident!("{}Input", ident);
-    let o_name = quote::format_ident!("{}Output", ident);
-    let p = OutParse::parse(&func.block.stmts);
-    let left = p.left;
-    let right = p.right;
-    let gen = quote! {
-        impl <'a> #o_name<'a> {
-            pub fn new(sig: &'a #sig_name, input: &'a #i_name, comb: &'a #comb_name) -> Self {
-                Self {
-                    #(#left: &#right,)*
-                }
+            ) => {
+                let _nadja_input_ = #mod_name::Input {
+                    $(
+                        $in: &$ext
+                     )*
+                };
+                let _nadja_sig_ = #mod_name::Sig::default();
+                let _nadja_comb_ = #mod_name::Comb::init(&_nadja_input_, &_nadja_sig_);
+                let _nadja_proc_ = #mod_name::Proc::init(&_nadja_input_, &_nadja_sig_, &_nadja_comb_);
+                let $instance = #mod_name::Instance::init(&_nadja_input_, &_nadja_sig_, &_nadja_comb_, &_nadja_proc_);
             }
         }
     };
     gen.into()
 }
-
-
-
-
-#[derive(Default)]
-struct OutParse<'a> {
-    pub left: Vec<&'a syn::Expr>,
-        pub right: Vec<&'a syn::Expr>,
-}
-
-impl<'a> OutParse<'a> {
-    fn parse(stmts: &'a Vec<syn::Stmt>) -> Self {
-        stmts.iter().fold(OutParse::default(), |mut m, x| {
-            match x {
-                syn::Stmt::Semi(x, _) => {
-                    match x {
-                        syn::Expr::Assign(x) => {
-                            m.left.push(&x.left);
-                            m.right.push(&x.right);
-                            m
-                        },
-                        _ => panic!("Error, assignment expression expected!"),
-                    }
-                },
-                _ => panic!("Error, expression with trailing semicolon expected!"),
-            }
-        }
-        )
-    }
-}
-
-#[derive(Default)]
-struct CombParse<'a> {
-    pub left: Vec<&'a syn::Expr>,
-        pub func: Vec<&'a syn::Expr>,
-        pub args: Vec<syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>>,
-}
-
-impl<'a> CombParse<'a> {
-    fn parse(stmts: &'a Vec<syn::Stmt>) -> Self {
-        stmts.iter().fold(CombParse::default(), |mut m, x| {
-            match x {
-                syn::Stmt::Semi(x, _) => {
-                    match x {
-                        syn::Expr::Assign(x) => {
-                            match &*x.right {
-                                syn::Expr::Call(x) => {
-                                    m.func.push(&x.func);
-                                    m.args.push(x.args.iter().map(|x| {
-                                        syn::punctuated::Pair::Punctuated(x.clone(),syn::token::Comma::default())
-                                    }).collect());
-                                },
-                                _ => panic!("Error, function call expression  expected!"),
-                            };
-                            m.left.push(&x.left);
-                            m
-                        },
-                        _ => panic!("Error, assignment expression expected!"),
-                    }
-                },
-                _ => panic!("Error, expression with trailing semicolon expected!"),
-            }
-        }
-        )
-    }
-}
-*/
