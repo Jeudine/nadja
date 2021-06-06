@@ -1,5 +1,5 @@
+use super::{Process, ProcessRes};
 use crate::interface::Event;
-use crate::interface::{Process, ProcessRes};
 use crate::simulator::Simulator;
 use std::cell::Cell;
 

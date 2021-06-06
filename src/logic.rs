@@ -171,9 +171,7 @@ impl<const WIDTH: usize> VLogic<WIDTH> {
         val.copy_from_slice(&self.val[START..END]);
         VLogic::new(val)
     }
-
 }
-
 
 impl<const WIDTH: usize> Trace for VLogic<WIDTH> {}
 impl<const WIDTH: usize> TChannel for VLogic<WIDTH> {}
@@ -223,10 +221,10 @@ impl<const WIDTH: usize> From<usize> for VLogic<WIDTH> {
     fn from(mut u: usize) -> Self {
         let mut val = [Logic::Logic0; WIDTH];
         for i in 0..WIDTH {
-            if u%2 == 1 {
+            if u % 2 == 1 {
                 val[i] = Logic::Logic1;
             }
-            u = u/2;
+            u = u / 2;
         }
         VLogic::new(val)
     }

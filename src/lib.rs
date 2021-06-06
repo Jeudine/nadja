@@ -8,15 +8,13 @@
 extern crate derive_new;
 #[macro_use]
 extern crate nadja_derive;
-#[macro_use]
-extern crate mashup;
 
 /// Basic combinational logic gates
 pub mod gate;
 mod interface;
 /// Public interface
 pub mod pub_interface;
-pub use crate::pub_interface::{Channel, In, InOut, Out, Param};
+pub use crate::pub_interface::{Channel, HaveProc, In, InOut, Out, Param};
 pub mod logic;
 pub mod process;
 pub mod signal;

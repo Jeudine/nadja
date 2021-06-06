@@ -2,6 +2,8 @@
 
 A hardware description language using Rust syntax, combined with an event-driven simulator.
 
+This library uses features only available in *Nightly Rust*. Please use the *nightly toolchain* to build the library.
+
 == TODO
 
 * Add a stop function
@@ -41,12 +43,12 @@ fn MyChannelFunc(input1: type_i1, input2: type_i2) -> type_o {
 }
 ----
 
-You can use the `new` constructor function preceded by the channel function's name to instantiate the combinational circuit. This instance implements the `Channel<T>` trait. For each input, you have to provide a reference that implements the `Channel<T>` trait representing the actual input of your combinational circuit.
+You can use a struct literal expression to instantiate the combinational circuit. This instance implements the `Channel<T>` trait. For each input, you have to provide a reference that implements the `Channel<T>` trait representing the actual input of your combinational circuit.
 
 [source, rust]
 ----
-let output = MyChannelFunc::new(&input1, &input2);
-//inpu1,input2 & output implement the Channel<T> trait
+let output = MyChannelFunc { input1: &i1, input2: &i2 };
+//i1,i2 & output implement the Channel<T> trait
 ----
 
 === Sequential logic
@@ -58,24 +60,25 @@ let output = MyChannelFunc::new(&input1, &input2);
 #[seq]
 mod my_module {
     //Constant parameter
-    const PARAM: ty_p = val_p;
+    const INIT: usize = val_init;
+    const WIDTH: usize = val_width;
 
     struct io {
         //Input
         a_i: In<ty_i1>,
-        rst_ni: In<bool>,
+        rst_ni: In<Logic>,
 
         //Output
-        x_o: Out<ty_o1>,
+        x_o: Out<VLogic<WIDTH>>,
         y_o: Out<ty_o2>,
     }
 
     fn core() {
         //Process
-        let x_q: ty_o1 = RegRst(x_d, rst_ni, /*TODO*/);
+        let x_q: WIDTH = FF(x_d, rst_ni, INIT);
         //Channel function
-        let x_d = CFunc1(x_q);
-        let y = CFunc2(input.a_i);
+        let x_d = CFunc1 {input: x_q};
+        let y = CFunc2 {input: a_i};
         //Output
         Output {
             x_o: x_q,

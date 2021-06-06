@@ -3,17 +3,17 @@ pub use clock::Clk;
 pub mod register;
 pub use register::{Reg, RegRst, FF};
 pub mod reset;
-pub use reset::Rst;
+use crate::simulator::Simulator;
+pub use reset::{RstBool, RstLogic};
 
-/*
-mod interface {
-    use crate::simulator::Simulator;
-
-    /// Executes the process until the end or a break.
-    /// In case the execution stops on a break, returns the duration of the break, otherwise return
-    /// None.
-    pub trait Process<'a> {
-        fn execute(&'a self, simulator: &mut Simulator<'a>) -> Option<usize>;
-    }
+/// Executes the process until the end, a break or a stop call.
+/// In case the execution breaks, returns the duration of the break.
+pub trait Process<'a> {
+    fn execute(&'a self, simulator: &mut Simulator<'a>) -> ProcessRes;
 }
-*/
+
+pub enum ProcessRes {
+    End,
+    Break(usize),
+    Stop,
+}

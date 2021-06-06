@@ -1,13 +1,9 @@
 // An implementation of a 20-bit Fibonacci LFSR with the following taps [20, 17]
 
-//TODO simplify the use
 use nadja::logic::{concat, Logic, VLogic};
-use nadja::process::{Clk, RegRst, Rst};
-use nadja::{Channel, In, Out, Param, Signal, Simulator, Wire};
+use nadja::process::{Clk, RstLogic};
+use nadja::{Channel, HaveProc, Simulator, Wire};
 
-//TODO simplify macro
-#[macro_use]
-extern crate derive_new;
 #[macro_use]
 extern crate nadja_derive;
 
@@ -23,19 +19,17 @@ fn CFunc(state_i: VLogic<WIDTH>) -> VLogic<WIDTH> {
 
 #[seq]
 mod lfsr {
-    use super::{WIDTH, CFunc};
+    use super::{CFunc, WIDTH};
 
     struct io {
         rst_ni: In<Logic>,
         state_o: Out<VLogic<WIDTH>>,
     }
 
-    fn core(){
+    fn core() {
         let state_q: WIDTH = FF(state_d, rst_ni, 1);
         let state_d = CFunc { state_i: state_q };
-        Output {
-            state_o: state_q,
-        };
+        Output { state_o: state_q };
     }
 }
 
@@ -44,20 +38,14 @@ fn main() {
     let rst_ni: Wire<Logic> = Default::default();
 
     //instance
-    lfsr!(i_lfsr {
-    rst_ni: rst_ni,
-    });
+    lfsr!(i_lfsr { rst_ni: rst_ni });
     // clk & rst
-    /*
-    let clk = Clk::new(1, &[&i_lfsr.state_q], &[]);
-    let rst_n_proc = Rst::new(&rst_ni, false, 2, 2, &[&i_lfsr.state_q]);
-    */
+    let clk = Clk::new(1, &i_lfsr.get_procs(), &[]);
+    let rst_n_proc = RstLogic::new(&rst_ni, false, 2, 2, &i_lfsr.get_procs());
 
     //simulation
-    /*
     let mut sim = Simulator::new(2097154, &[&clk, &rst_n_proc]);
     sim.run();
-    */
 
     //output
     println!("{:?}", i_lfsr.state_o);

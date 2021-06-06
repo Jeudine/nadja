@@ -33,8 +33,6 @@ pub fn channel(_: TokenStream, item: TokenStream) -> TokenStream {
     let body = &func.block;
 
     let gen = quote! {
-        //TODO remove derive(new)
-        #[derive(new)]
         pub struct #channel_name<'a> {
             #(#inputs_name: &'a dyn Channel<#inputs_type>,)*
         }
@@ -176,10 +174,10 @@ impl<'a> ModuleAst<'a> {
             },
         );
         let node = ProcNode {
-                ty: ty,
-                name: name,
-                proc: proc,
-                args: args,
+            ty: ty,
+            name: name,
+            proc: proc,
+            args: args,
         };
 
         if proc.to_string().eq(&String::from("FF")) {
@@ -240,98 +238,103 @@ pub fn seq(_: TokenStream, item: TokenStream) -> TokenStream {
     let ffs_args = mod_ast.ffs.iter().map(|x| &x.args).collect::<Vec<_>>();
 
     let gen = quote! {
-        #mod_vis mod #mod_name {
-            use nadja::logic::{concat, Logic, VLogic};
-            use nadja::logic::Logic::{Logic0, Logic1};
-            use nadja::process::{Clk, Reg, RegRst, Rst, FF};
-            use nadja::{Channel, In, Out, Signal, Simulator, Wire, Param};
-            #(#consts)*
-            #(#uses)*
-            //TODO: visibility of each struct
-            pub struct Input<'a> {
-                #(pub #ins_name: &'a #ins_ty,)*
-            }
+            #mod_vis mod #mod_name {
+                use nadja::logic::{concat, Logic, VLogic};
+                use nadja::logic::Logic::{Logic0, Logic1};
+                use nadja::process::{Process, Clk, Reg, RegRst, FF};
+                use nadja::{Channel, In, Out, Signal, Simulator, Wire, Param, HaveProc};
+                #(#consts)*
+                #(#uses)*
+                pub struct Input<'a> {
+                    #(pub #ins_name: &'a #ins_ty,)*
+                }
 
-            #[derive(Default)]
-            pub struct Sig {
-                #(#procs_name: Signal<#procs_ty>,)*
-                #(#ffs_name: Signal<VLogic<#ffs_ty>>,)*
-            }
+                #[derive(Default)]
+                pub struct Sig {
+                    #(#procs_name: Signal<#procs_ty>,)*
+                    #(#ffs_name: Signal<VLogic<#ffs_ty>>,)*
+                }
 
-            pub struct Comb<'a> {
-                #(#combs_name: #combs_chann_name<'a>,)*
-            }
+                pub struct Comb<'a> {
+                    #(#combs_name: #combs_chann_name<'a>,)*
+                }
 
-            impl<'a> Comb<'a> {
-                #[allow(unused_variables)]
-                pub fn init(input: &'a Input, sig: &'a Sig) -> Self {
-                    #(let #ins_name = input.#ins_name;)*
-                    #(let #procs_name = &sig.#procs_name;)*
-                    #(let #ffs_name = &sig.#ffs_name;)*
-                    Self {
-                        #(#combs_name: #combs_chann,)*
+                impl<'a> Comb<'a> {
+                    #[allow(unused_variables)]
+                    pub fn init(input: &'a Input, sig: &'a Sig) -> Self {
+                        #(let #ins_name = input.#ins_name;)*
+                        #(let #procs_name = &sig.#procs_name;)*
+                        #(let #ffs_name = &sig.#ffs_name;)*
+                        Self {
+                            #(#combs_name: #combs_chann,)*
+                        }
+                    }
+                }
+
+                pub struct Proc<'a> {
+                    #(#procs_name: #procs_proc<'a, #procs_ty>,)*
+                    #(#ffs_name: #ffs_proc<'a, #ffs_ty>,)*
+                }
+
+                impl<'a> Proc<'a> {
+                    #[allow(unused_variables)]
+                    pub fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
+                        #(let #ins_name = input.#ins_name;)*
+                        #(let #procs_name = &sig.#procs_name;)*
+                        #(let #ffs_name = &sig.#ffs_name;)*
+                        #(let #combs_name = &comb.#combs_name;)*
+                        Self {
+                            #(#procs_name: #procs_proc::new(#procs_args),)*
+                            #(#ffs_name: #ffs_proc::new(#ffs_args),)*
+                        }
+                    }
+                }
+
+                pub struct Instance<'a> {
+                    pub #(#outs_name: &'a #outs_ty,)*
+                    pub _nadja_proc_: &'a Proc<'a>,
+                }
+
+                impl<'a> Instance<'a> {
+                    #[allow(unused_variables)]
+                    pub fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb, proc: &'a Proc) -> Self {
+                        #(let #ins_name = input.#ins_name;)*
+                        #(let #procs_name = &sig.#procs_name;)*
+                        #(let #ffs_name = &sig.#ffs_name;)*
+                        #(let #combs_name = &comb.#combs_name;)*
+                        Self {
+                            _nadja_proc_: proc,
+                            #output
+                        }
+                    }
+                }
+
+                impl<'a> HaveProc<'a> for Instance<'a> {
+                    fn get_procs(&'a self) -> Vec<&'a dyn Process<'a>> {
+                        vec![#(&self._nadja_proc_.#procs_name,)* #(&self._nadja_proc_.#ffs_name,)*]
                     }
                 }
             }
-
-            pub struct Proc<'a> {
-                #(#procs_name: #procs_proc<'a, #procs_ty>,)*
-                #(#ffs_name: #ffs_proc<'a, #ffs_ty>,)*
-            }
-
-            impl<'a> Proc<'a> {
-                #[allow(unused_variables)]
-                pub fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb) -> Self {
-                    #(let #ins_name = input.#ins_name;)*
-                    #(let #procs_name = &sig.#procs_name;)*
-                    #(let #ffs_name = &sig.#ffs_name;)*
-                    #(let #combs_name = &comb.#combs_name;)*
-                    Self {
-                        #(#procs_name: #procs_proc::new(#procs_args),)*
-                        #(#ffs_name: #ffs_proc::new(#ffs_args),)*
+    #[macro_export]
+            macro_rules! #mod_name {
+                (
+                    $instance:ident {
+                        $(
+                            $in:ident: $ext:expr
+                         ),* $(,)*
                     }
+                ) => {
+                    let _nadja_input_ = #mod_name::Input {
+                        $(
+                            $in: &$ext
+                         )*
+                    };
+                    let _nadja_sig_ = #mod_name::Sig::default();
+                    let _nadja_comb_ = #mod_name::Comb::init(&_nadja_input_, &_nadja_sig_);
+                    let _nadja_proc_ = #mod_name::Proc::init(&_nadja_input_, &_nadja_sig_, &_nadja_comb_);
+                    let $instance = #mod_name::Instance::init(&_nadja_input_, &_nadja_sig_, &_nadja_comb_, &_nadja_proc_);
                 }
             }
-
-            pub struct Instance<'a> {
-                pub #(#outs_name: &'a #outs_ty,)*
-                pub _nadja_proc_: &'a Proc<'a>,
-            }
-
-            impl<'a> Instance<'a> {
-                #[allow(unused_variables)]
-                pub fn init(input: &'a Input, sig: &'a Sig, comb: &'a Comb, proc: &'a Proc) -> Self {
-                    #(let #ins_name = input.#ins_name;)*
-                    #(let #procs_name = &sig.#procs_name;)*
-                    #(let #ffs_name = &sig.#ffs_name;)*
-                    #(let #combs_name = &comb.#combs_name;)*
-                    Self {
-                        #output
-                        _nadja_proc_: proc,
-                    }
-                }
-            }
-        }
-#[macro_export]
-        macro_rules! #mod_name {
-            (
-                $instance:ident {
-                    $(
-                        $in:ident: $ext:expr
-                     ),* $(,)*
-                }
-            ) => {
-                let _nadja_input_ = #mod_name::Input {
-                    $(
-                        $in: &$ext
-                     )*
-                };
-                let _nadja_sig_ = #mod_name::Sig::default();
-                let _nadja_comb_ = #mod_name::Comb::init(&_nadja_input_, &_nadja_sig_);
-                let _nadja_proc_ = #mod_name::Proc::init(&_nadja_input_, &_nadja_sig_, &_nadja_comb_);
-                let $instance = #mod_name::Instance::init(&_nadja_input_, &_nadja_sig_, &_nadja_comb_, &_nadja_proc_);
-            }
-        }
-    };
+        };
     gen.into()
 }

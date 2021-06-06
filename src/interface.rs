@@ -1,5 +1,6 @@
 use super::simulator::Simulator;
 use super::trace::Trace;
+use crate::process::Process;
 use crate::Channel;
 use std::fmt::{Debug, Formatter, Result};
 
@@ -34,15 +35,3 @@ impl TValue for bool {}
 
 impl TChannel for u32 {}
 impl TValue for u32 {}
-
-/// Executes the process until the end, a break or a stop call.
-/// In case the execution breaks, returns the duration of the break.
-pub trait Process<'a> {
-    fn execute(&'a self, simulator: &mut Simulator<'a>) -> ProcessRes;
-}
-
-pub enum ProcessRes {
-    End,
-    Break(usize),
-    Stop,
-}

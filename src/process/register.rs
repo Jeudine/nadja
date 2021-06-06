@@ -1,8 +1,9 @@
-use crate::interface::{Process, ProcessRes, Simulable, TValue};
+use super::{Process, ProcessRes};
+use crate::interface::{Simulable, TValue};
+use crate::logic::{Logic, VLogic};
 use crate::Channel;
 use crate::Signal;
 use crate::Simulator;
-use crate::logic::{VLogic, Logic};
 
 #[derive(new)]
 pub struct Reg<'a, T: TValue> {
@@ -55,10 +56,12 @@ impl<'a, const WIDTH: usize> Process<'a> for FF<'a, WIDTH> {
 }
 
 impl<'a, const WIDTH: usize> FF<'a, WIDTH> {
-    pub fn new(d: &'a dyn Channel<VLogic<WIDTH>>,
-               rst_n: &'a dyn Channel<Logic>,
-               init_state: usize,
-               q: &'a Signal<VLogic<WIDTH>>) -> Self {
+    pub fn new(
+        d: &'a dyn Channel<VLogic<WIDTH>>,
+        rst_n: &'a dyn Channel<Logic>,
+        init_state: usize,
+        q: &'a Signal<VLogic<WIDTH>>,
+    ) -> Self {
         Self {
             d: d,
             rst_n: rst_n,

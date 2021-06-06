@@ -1,4 +1,5 @@
-use crate::interface::{Event, Process, Simulable, SimulableTrig, TValue};
+use crate::interface::{Event, Simulable, SimulableTrig, TValue};
+use crate::process::Process;
 use crate::simulator::Simulator;
 use crate::Channel;
 use std::cell::Cell;
