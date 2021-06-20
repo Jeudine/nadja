@@ -12,7 +12,7 @@ const WIDTH: usize = 20;
 #[channel]
 fn CFunc(state_i: VLogic<WIDTH>) -> VLogic<WIDTH> {
     concat(
-        VLogic::new([state_i[WIDTH - 1] ^ state_i[16]]),
+        VLogic::from(state_i[WIDTH - 1] ^ state_i[16]),
         state_i.sub::<0, { WIDTH - 1 }>(),
     )
 }

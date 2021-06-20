@@ -2,6 +2,8 @@ pub mod clock;
 pub use clock::Clk;
 pub mod register;
 pub use register::{Reg, RegRst, FF};
+pub mod ram;
+pub use ram::RamSp;
 pub mod reset;
 use crate::simulator::Simulator;
 pub use reset::{RstBool, RstLogic};

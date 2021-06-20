@@ -84,6 +84,27 @@ impl From<Logic> for char {
         }
     }
 }
+
+impl From<Logic> for VLogic<1> {
+    fn from(val: Logic) -> Self {
+        match val {
+            Logic::Logic0 => VLogic {
+                val: [Logic::Logic0],
+            },
+            Logic::Logic1 => VLogic {
+                val: [Logic::Logic1],
+            },
+            Logic::Logicz => VLogic {
+                val: [Logic::Logicz],
+            },
+
+            Logic::Logicx => VLogic {
+                val: [Logic::Logicx],
+            },
+        }
+    }
+}
+
 impl Not for Logic {
     type Output = Self;
 
