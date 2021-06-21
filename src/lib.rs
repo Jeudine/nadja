@@ -24,6 +24,7 @@ pub use crate::simulator::Simulator;
 pub mod trace;
 pub mod wire;
 pub use crate::wire::{Wire, WireTrig};
+pub mod util;
 
 #[cfg(test)]
 mod tests {
