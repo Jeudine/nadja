@@ -9,12 +9,9 @@ This library uses features only available in *Nightly Rust*. Please use the *nig
 * Add a stop function
 * Add a notion of time scale (ps, ns...)
 * Enable submodules
-* RAM block
-* FSM
-* Moore & Mealy machine
+* FSM: Moore & Mealy
 * Generate trace files
 * macros for concat
-* Generate SystemVerilog code
 * Directly jump to dates at which there are events
 
 == Usage (WIP)
