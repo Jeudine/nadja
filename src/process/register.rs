@@ -1,9 +1,7 @@
 use super::{Process, ProcessRes};
 use crate::interface::{Simulable, TValue};
 use crate::logic::{Logic, VLogic};
-use crate::Channel;
-use crate::Signal;
-use crate::Simulator;
+use crate::{Channel, Signal, Simulator};
 
 #[derive(new)]
 pub struct Reg<'a, T: TValue> {

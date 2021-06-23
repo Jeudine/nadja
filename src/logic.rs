@@ -2,8 +2,7 @@ use crate::interface::{TChannel, TValue};
 use crate::trace::Trace;
 use std::convert::From;
 use std::fmt::{Debug, Formatter, Result};
-use std::ops::{BitAnd, BitOr, BitXor, Not};
-use std::ops::{Index, IndexMut};
+use std::ops::{BitAnd, BitOr, BitXor, Not, Index, IndexMut};
 
 #[derive(Copy, Clone, PartialEq)]
 pub enum Logic {
@@ -248,5 +247,19 @@ impl<const WIDTH: usize> From<usize> for VLogic<WIDTH> {
             u = u / 2;
         }
         VLogic::new(val)
+    }
+}
+
+impl<const WIDTH: usize> From<VLogic<WIDTH>> for Option<usize> {
+    fn from(u: VLogic<WIDTH>) -> Self {
+        let mut val = 0;
+        for i in 0..WIDTH {
+            match u[i] {
+                Logic::Logic1 => val = val + 2^i,
+                Logic::Logicx | Logic::Logicz => return None,
+                _ => (),
+            };
+        }
+        Some(val)
     }
 }

@@ -1,28 +1,31 @@
 use super::{Process, ProcessRes};
 use crate::logic::{Logic, VLogic};
-use crate::util::log2;
-use crate::{Channel, Simulator};
+use crate::{Channel, Signal, Simulator};
+use crate::interface::Simulable;
+use std::cell::Cell;
 
-pub struct RamSp<'a, const WIDTH: usize, const DEPTH: usize>
-where
-    VLogic<{ log2(DEPTH) }>: Sized,
+pub struct RamSp<'a, const DATA_WIDTH: usize, const ADDR_WIDTH: usize, const DEPTH: usize>
 {
-    mem: [VLogic<WIDTH>; DEPTH],
-    wr_en: &'a dyn Channel<Logic>,
-    addr: &'a dyn Channel<VLogic<{ log2(DEPTH) }>>,
-    data_i: &'a dyn Channel<VLogic<WIDTH>>,
-    data_o: &'a dyn Channel<VLogic<WIDTH>>,
+    mem: [Cell<VLogic<DATA_WIDTH>>; DEPTH],
+    we: &'a dyn Channel<Logic>,
+    addr: &'a dyn Channel<VLogic<{ ADDR_WIDTH }>>,
+    data: &'a dyn Channel<VLogic<DATA_WIDTH>>,
+    q: &'a Signal<VLogic<DATA_WIDTH>>,
 }
 
-impl<'a, const WIDTH: usize, const DEPTH: usize> Process<'a> for RamSp<'a, WIDTH, DEPTH>
-where
-    VLogic<{ log2(DEPTH) }>: Sized,
+impl<'a, const DATA_WIDTH: usize, const ADDR_WIDTH: usize, const DEPTH: usize> Process<'a> for RamSp<'a, DATA_WIDTH, ADDR_WIDTH, DEPTH>
 {
     fn execute(&self, simulator: &mut Simulator<'a>) -> ProcessRes {
-        if self.wr_en.read() == Logic::Logic1 {
-            self.mem[addr
+        let addr: Option<usize> = self.addr.read().into();
+        match addr {
+            Some(x) => {
+                self.q.write(self.mem[x].get(), simulator);
+                if self.we.read() == Logic::Logic1 {
+                    self.mem[x].set(self.data.read());
+                }
+            }
+            None => (),
         }
-        self.data_o.write(
         ProcessRes::End
     }
 }
